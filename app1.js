@@ -1916,7 +1916,7 @@ function render(){
     }).join('');
 
     card.innerHTML = `
-      <div class="pt-header" onclick="${selectMode?'toggleSelectPatient(event,\''+p.id+'\')':'togglePt(\''+p.id+'\''}" style="${selectMode?'cursor:pointer':''}">
+      <div class="pt-header" onclick="${selectMode?'toggleSelectPatient(event,\''+p.id+'\')':'togglePt(\''+p.id+'\')'}" style="${selectMode?'cursor:pointer':''}">
         <div class="pt-left">
           ${selectCb}
           <div class="pt-avatar">${initials(p.name)}</div>
