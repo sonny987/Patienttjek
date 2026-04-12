@@ -1,0 +1,29 @@
+{
+  "name": "Klinisk Plejeplan",
+  "short_name": "Plejeplan",
+  "description": "Neurologi / Stroke — Klinisk plejeplan og patientoverblik",
+  "start_url": "/Patienttjek/",
+  "scope": "/Patienttjek/",
+  "display": "standalone",
+  "background_color": "#0a0d14",
+  "theme_color": "#111520",
+  "orientation": "portrait-primary",
+  "lang": "da",
+  "categories": ["medical", "health"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%23111520'/><rect x='224' y='80' width='64' height='352' rx='28' fill='%23ef4444'/><rect x='80' y='224' width='352' height='64' rx='28' fill='%23ef4444'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Prioritering",
+      "short_name": "Prioritering",
+      "description": "Åbn prioriteringsliste",
+      "url": "/Patienttjek/#prioritering"
+    }
+  ]
+}
