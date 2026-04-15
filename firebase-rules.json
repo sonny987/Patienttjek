@@ -1,0 +1,23 @@
+{
+  "rules": {
+    "system": {
+      "afdelinger": {
+        ".read": true,
+        ".write": false,
+        "$afdId": {
+          ".write": false
+        }
+      }
+    },
+    "afdelinger": {
+      "$deptSecret": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "$other": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}
