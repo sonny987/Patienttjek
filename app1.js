@@ -981,10 +981,11 @@ document.addEventListener('contextmenu', e=>{
 });
 
 function toggleTheme(){
-  const isLight = document.body.classList.toggle('light-mode');
-  localStorage.setItem('kp2_theme', isLight ? 'light' : 'dark');
+  const isDark = document.body.classList.toggle('dark-mode');
+  document.body.classList.remove('light-mode');
+  localStorage.setItem('kp2_theme', isDark ? 'dark' : 'light');
   const btn = document.getElementById('themeBtn');
-  if(btn) btn.textContent = isLight ? '☀️' : '🌙';
+  if(btn) btn.textContent = isDark ? '☀️' : '🌙';
 }
 
 function toggleSidebarSide(){
@@ -997,8 +998,8 @@ function toggleSidebarSide(){
 }
 
 (function(){
-  if(localStorage.getItem('kp2_theme')==='light'){
-    document.body.classList.add('light-mode');
+  if(localStorage.getItem('kp2_theme')==='dark'){
+    document.body.classList.add('dark-mode');
     document.addEventListener('DOMContentLoaded',()=>{
       const btn = document.getElementById('themeBtn');
       if(btn) btn.textContent = '☀️';
