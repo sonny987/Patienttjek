@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#639922">
+<title>Patienttjek</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--s1:#fff;--s2:#f0efe9;--s3:#e8e6de;
+  --brd:#e2e0d8;--brd2:#cccab8;
+  --txt:#1a1a18;--txt2:#6b6a62;--txt3:#9a9890;
+  --g:#3B6D11;--gbg:#EAF3DE;--gm:#639922;
+  --a:#854F0B;--abg:#FAEEDA;--am:#BA7517;
+  --r:#A32D2D;--rbg:#FCEBEB;--rm:#E24B4A;
+  --gr:#444441;--grbg:#F1EFE8;--grm:#888780;
+  --b:#0C447C;--bbg:#E6F1FB;--bm:#378ADD;
+  --radius:9px;--rl:13px;
+}
+body.dark{
+  --bg:#0a0d14;--s1:#111520;--s2:#161b2e;--s3:#1c2238;
+  --brd:#252d48;--brd2:#2e3854;
+  --txt:#dce3f5;--txt2:#6b7599;--txt3:#8892b0;
+  --g:#10b981;--gbg:rgba(16,185,129,.13);--gm:#10b981;
+  --a:#f59e0b;--abg:rgba(245,158,11,.13);--am:#f59e0b;
+  --r:#ef4444;--rbg:rgba(239,68,68,.13);--rm:#ef4444;
+  --gr:#8892b0;--grbg:rgba(136,146,176,.13);--grm:#8892b0;
+  --b:#3b82f6;--bbg:rgba(59,130,246,.13);--bm:#3b82f6;
+}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);font-size:15px}
+body{padding-bottom:66px}
+.app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto;background:var(--s1);position:relative;border-left:.5px solid var(--brd);border-right:.5px solid var(--brd)}
+
+/* TOPBAR */
+.topbar{background:var(--s1);border-bottom:.5px solid var(--brd);padding:10px 15px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tb-brand{display:flex;align-items:center;gap:8px}
+.tb-icon{width:32px;height:32px;border-radius:8px;background:var(--gbg);border:.5px solid var(--gm);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.tb-title{font-size:15px;font-weight:700;color:var(--txt)}
+.tb-sub{font-size:11px;color:var(--txt2);margin-top:1px}
+.tb-right{display:flex;align-items:center;gap:6px}
+.afd-pill{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;background:var(--gbg);color:var(--g);border:.5px solid var(--gm)}
+.icon-btn{width:30px;height:30px;border-radius:50%;border:.5px solid var(--brd);background:var(--s2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+
+/* STAT STRIP */
+.stat-strip{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:.5px solid var(--brd);background:var(--s1);flex-shrink:0}
+.sc{padding:9px 4px;text-align:center;border-right:.5px solid var(--brd);cursor:pointer;user-select:none;transition:background .1s}
+.sc:last-child{border-right:none}
+.sc:hover{background:var(--s2)}
+.sc-val{font-size:19px;font-weight:700;line-height:1}
+.sc-lbl{font-size:9px;color:var(--txt2);margin-top:2px}
+
+/* PATIENT TABS */
+.pt-tabs{display:flex;overflow-x:auto;border-bottom:.5px solid var(--brd);background:var(--s1);flex-shrink:0;scrollbar-width:none}
+.pt-tabs::-webkit-scrollbar{display:none}
+.ptt{display:flex;align-items:center;gap:5px;padding:9px 13px;font-size:13px;font-weight:500;color:var(--txt2);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
+.ptt.active{color:var(--txt);border-bottom-color:var(--gm)}
+.ptt .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ptt-add{padding:9px 14px;font-size:20px;color:var(--txt3);cursor:pointer}
+
+/* FILTER BANNER */
+.filter-banner{display:none;align-items:center;justify-content:space-between;padding:7px 14px;font-size:12px;font-weight:500;border-bottom:.5px solid var(--brd);background:var(--s1);flex-shrink:0}
+.filter-banner.show{display:flex}
+.filter-x{font-size:11px;cursor:pointer;padding:2px 8px;border-radius:20px;border:.5px solid var(--brd2);color:var(--txt2)}
+
+/* PAGES */
+.page{display:none;flex-direction:column;flex:1;overflow:hidden}
+.page.active{display:flex}
+.scroll{flex:1;overflow-y:auto;padding:14px 15px 80px}
+
+/* PATIENT HEADER */
+.pt-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.pt-info{display:flex;align-items:center;gap:10px;cursor:pointer;padding:4px 6px;border-radius:var(--radius);margin:-4px -6px;transition:background .12s}
+.pt-info:hover{background:var(--s2)}
+.av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.pt-nm{font-size:15px;font-weight:700;color:var(--txt);display:flex;align-items:center;gap:5px}
+.pt-mt{font-size:11px;color:var(--txt2);margin-top:1px}
+.prog-wrap{display:flex;align-items:center;gap:7px}
+.prog-n{font-size:22px;font-weight:700;color:var(--txt);line-height:1}
+.prog-s{font-size:11px;color:var(--txt2)}
+
+/* SUMBAR */
+.sumbar{height:5px;border-radius:3px;display:flex;gap:2px;overflow:hidden;margin-bottom:11px;cursor:pointer}
+.sb{height:100%;border-radius:2px;transition:width .3s}
+
+/* LEGEND */
+.legend{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:13px}
+.leg{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);cursor:pointer;padding:2px 7px;border-radius:20px;border:.5px solid transparent;transition:all .12s;user-select:none}
+.leg:hover,.leg.on{border-color:var(--brd2);background:var(--s2)}
+.leg.on{font-weight:600;color:var(--txt)}
+.ldot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* SEC LABEL */
+.sec-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--txt3);margin:13px 0 5px}
+.sec-lbl:first-child{margin-top:0}
+
+/* TASKS */
+.task{border:.5px solid var(--brd);border-radius:var(--radius);margin-bottom:3px;overflow:hidden;background:var(--s1)}
+.task-main{display:flex;align-items:center;cursor:pointer;transition:background .12s}
+.task-main:hover{background:var(--s2)}
+.stripe{width:3px;align-self:stretch;flex-shrink:0}
+.tb{display:flex;align-items:center;gap:7px;flex:1;padding:8px 10px}
+.tico{font-size:14px;width:17px;text-align:center;flex-shrink:0}
+.ttxt{flex:1;font-size:13px;color:var(--txt);line-height:1.3}
+.ttime{font-size:10px;color:var(--txt3);flex-shrink:0}
+.badge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap;cursor:pointer;user-select:none}
+.bd{background:var(--gbg);color:var(--g);border:.5px solid var(--gm)}
+.bp{background:var(--abg);color:var(--a);border:.5px solid var(--am)}
+.ba{background:var(--rbg);color:var(--r);border:.5px solid var(--rm)}
+.bs{background:var(--grbg);color:var(--gr);border:.5px solid var(--grm)}
+.s-d{background:var(--gm)}.s-p{background:var(--am)}.s-a{background:var(--rm)}.s-s{background:var(--grm)}
+.task-note{font-size:11px;color:var(--txt2);padding:3px 10px 5px 29px;border-top:.5px solid var(--brd);background:var(--s2)}
+.task-freq{font-size:9px;padding:1px 6px;border-radius:10px;background:var(--bbg);color:var(--b);border:.5px solid var(--bm);margin-left:3px;flex-shrink:0}
+.task-imp-h{font-size:9px;padding:1px 6px;border-radius:10px;background:var(--rbg);color:var(--r);border:.5px solid var(--rm);margin-left:2px}
+.task-imp-v{font-size:9px;padding:1px 6px;border-radius:10px;background:var(--abg);color:var(--a);border:.5px solid var(--am);margin-left:2px}
+.task-actions{display:flex;gap:4px;padding:0 8px 0 0;flex-shrink:0}
+.ta-btn{padding:2px 6px;border-radius:5px;border:.5px solid var(--brd2);background:transparent;font-size:10px;cursor:pointer;color:var(--txt3);font-family:inherit}
+.ta-del{border-color:var(--rm);color:var(--r)}
+
+/* SUBTASKS */
+.subs{border-top:.5px solid var(--brd);background:var(--s2)}
+.sub-row{display:flex;align-items:flex-start;gap:7px;padding:7px 10px 7px 13px;border-bottom:.5px solid var(--brd);cursor:pointer;transition:background .1s}
+.sub-row:last-child{border-bottom:none}
+.sub-row:hover{background:var(--brd)}
+.sub-chk{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--brd2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;margin-top:2px;transition:all .15s}
+.sub-chk.d{background:var(--gm);border-color:var(--gm);color:#fff}
+.sub-chk.a{background:var(--rm);border-color:var(--rm);color:#fff}
+.sub-chk.s{background:var(--grm);border-color:var(--grm);color:#fff}
+.sub-body{flex:1;min-width:0}
+.sub-txt{font-size:12px;color:var(--txt);line-height:1.3}
+.sub-meta{font-size:10px;color:var(--txt3);margin-top:1px}
+.sub-add{display:flex;gap:5px;padding:6px 10px;border-top:.5px solid var(--brd);background:var(--s1)}
+.sub-add input{flex:1;padding:5px 8px;border-radius:6px;border:.5px solid var(--brd2);font-size:12px;font-family:inherit;outline:none;background:var(--s1);color:var(--txt)}
+.sub-add input:focus{border-color:var(--gm)}
+.sub-add-btn{padding:5px 9px;border-radius:6px;border:.5px solid var(--brd2);background:var(--s1);color:var(--txt3);cursor:pointer;font-size:11px;font-family:inherit}
+.sub-adv-btn{padding:5px 9px;border-radius:6px;border:.5px solid var(--gm);background:var(--gbg);color:var(--g);cursor:pointer;font-size:11px;font-family:inherit}
+
+/* INTERVAL TASKS */
+.itask{border:.5px solid var(--brd);border-radius:var(--radius);margin-bottom:3px;overflow:hidden;background:var(--s1)}
+.ith{display:flex;align-items:center;gap:7px;padding:8px 10px;cursor:pointer;transition:background .12s}
+.ith:hover{background:var(--s2)}
+.ititle{flex:1;font-size:13px;font-weight:600;color:var(--txt)}
+.imeta{font-size:10px;color:var(--txt2);margin-top:1px}
+.ibadge{font-size:9px;padding:2px 6px;border-radius:20px;background:var(--bbg);color:var(--b);border:.5px solid var(--bm);white-space:nowrap}
+.dose-row{display:flex;align-items:center;gap:7px;padding:6px 10px;border-bottom:.5px solid var(--brd);cursor:pointer;transition:background .1s}
+.dose-row:last-child{border-bottom:none}
+.dose-row:hover{background:var(--s2)}
+.dchk{width:17px;height:17px;border-radius:4px;border:1.5px solid var(--brd2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;transition:all .15s}
+.dchk.ok{background:var(--gm);border-color:var(--gm);color:#fff}
+.dchk.sk{background:var(--grm);border-color:var(--grm);color:#fff}
+.dlbl{flex:1;font-size:12px;color:var(--txt)}
+.dtime{font-size:10px;color:var(--txt3)}
+.dpill{font-size:9px;font-weight:600;padding:1px 6px;border-radius:10px}
+.dp-ok{background:var(--gbg);color:var(--g);border:.5px solid var(--gm)}
+.dp-p{background:var(--abg);color:var(--a);border:.5px solid var(--am)}
+.dp-sk{background:var(--grbg);color:var(--gr);border:.5px solid var(--grm)}
+.ibar-row{display:flex;align-items:center;gap:7px;padding:5px 10px;background:var(--s2);border-top:.5px solid var(--brd)}
+.ibar{flex:1;height:3px;border-radius:2px;background:var(--brd);overflow:hidden}
+.ibar-fill{height:100%;background:var(--gm);border-radius:2px;transition:width .3s}
+.itask-actions{display:flex;gap:4px;flex-shrink:0}
+
+/* VAGTOPGAVER */
+.vt-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.vt-prog{display:flex;align-items:center;gap:8px;margin-bottom:13px}
+.vt-track{flex:1;height:6px;border-radius:3px;background:var(--brd);overflow:hidden}
+.vt-fill{height:100%;background:var(--gm);border-radius:3px;transition:width .3s}
+.vt-pct{font-size:13px;font-weight:700;min-width:34px;text-align:right;color:var(--g)}
+.vt-sec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:5px 9px;border-radius:var(--radius);border:.5px solid var(--brd);background:var(--s2);margin:10px 0 4px;display:flex;justify-content:space-between;color:var(--txt3)}
+.vt-sec:first-child{margin-top:0}
+.vt-item{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border:.5px solid var(--brd);border-radius:var(--radius);margin-bottom:3px;cursor:pointer;transition:background .1s;background:var(--s1)}
+.vt-item:hover{background:var(--s2)}
+.vt-item.dn .vti-txt{text-decoration:line-through;color:var(--txt3)}
+.vtchk{width:19px;height:19px;border-radius:5px;border:1.5px solid var(--brd2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:11px;transition:all .15s}
+.vtchk.dn{background:var(--gm);border-color:var(--gm);color:#fff}
+.vti-txt{font-size:13px;color:var(--txt);line-height:1.3}
+.vti-sub{font-size:10px;color:var(--txt3);margin-top:1px}
+.vti-time{font-size:10px;color:var(--txt3);flex-shrink:0;margin-top:2px}
+
+/* NYHEDER */
+.ny-topbar{padding:12px 15px;border-bottom:.5px solid var(--brd);flex-shrink:0;background:var(--s1)}
+.ny-search{display:flex;align-items:center;gap:7px;background:var(--s2);border-radius:var(--radius);border:.5px solid var(--brd);padding:8px 12px;margin-bottom:9px}
+.ny-search input{flex:1;border:none;background:transparent;font-size:13px;font-family:inherit;outline:none;color:var(--txt)}
+.ny-afd-chip{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--gbg);color:var(--g);border:.5px solid var(--gm);display:inline-block}
+.ny-list{flex:1;overflow-y:auto;padding:0 0 80px}
+.ny-yr{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);border-bottom:.5px solid var(--brd);padding:6px 15px;background:var(--s2)}
+.ny-card{border-bottom:.5px solid var(--brd);background:var(--s1)}
+.ny-card.ulaest{border-left:3px solid var(--bm)}
+.ny-hdr{display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;user-select:none}
+.ny-hdr:hover{background:var(--s2)}
+.ny-udot{width:7px;height:7px;border-radius:50%;background:var(--bm);flex-shrink:0;transition:opacity .2s}
+.ny-meta{flex:1;min-width:0}
+.ny-title{font-size:13px;font-weight:600;color:var(--txt)}
+.ny-sub{font-size:10px;color:var(--txt2);display:flex;align-items:center;gap:5px;margin-top:1px;flex-wrap:wrap}
+.ny-date{font-size:10px;color:var(--txt3);flex-shrink:0}
+.ny-pill{font-size:9px;font-weight:600;padding:1px 6px;border-radius:10px}
+.ny-pill.u{background:var(--bbg);color:var(--b);border:.5px solid var(--bm)}
+.ny-pill.l{background:var(--s2);color:var(--txt3);border:.5px solid var(--brd)}
+.ny-body{display:none;padding:10px 14px;background:var(--s2);border-top:.5px solid var(--brd)}
+.ny-card.open .ny-body{display:block}
+.ny-stitle{font-size:12px;font-weight:700;color:var(--txt);margin-bottom:3px}
+.ny-stxt{font-size:12px;color:var(--txt2);line-height:1.55;margin-bottom:9px}
+.ny-stxt:last-child{margin-bottom:0}
+.ny-upload{display:flex;align-items:center;justify-content:center;gap:7px;margin:12px 15px;padding:10px;border-radius:var(--radius);border:1px dashed var(--brd2);font-size:12px;cursor:pointer;color:var(--txt2);transition:all .12s}
+.ny-upload:hover{border-color:var(--gm);color:var(--g);background:var(--gbg)}
+
+/* VAGTOVERLEVERING */
+.vov-card{background:var(--s1);border:.5px solid var(--brd);border-radius:var(--rl);margin-bottom:10px;overflow:hidden}
+.vov-pt-hdr{display:flex;align-items:center;gap:9px;padding:11px 14px;border-bottom:.5px solid var(--brd);background:var(--s2)}
+.vov-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.vov-pt-name{font-size:14px;font-weight:700;color:var(--txt)}
+.vov-pt-meta{font-size:11px;color:var(--txt2);margin-top:1px}
+.vov-item{display:flex;align-items:flex-start;gap:7px;padding:7px 14px;border-bottom:.5px solid var(--brd);font-size:12px}
+.vov-item:last-child{border-bottom:none}
+.vov-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.vov-txt{flex:1;color:var(--txt);line-height:1.4}
+
+/* INDSTILLINGER */
+.set-sec{border-bottom:.5px solid var(--brd);padding:12px 15px;background:var(--s1)}
+.set-hdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);margin-bottom:9px}
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:.5px solid var(--brd);font-size:13px;color:var(--txt)}
+.set-row:last-child{border-bottom:none}
+.set-val{font-size:11px;color:var(--txt2)}
+.tog{width:32px;height:18px;border-radius:9px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.tog.on{background:var(--gm)}.tog.off{background:var(--brd2)}
+.tok{width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s}
+.tog.on .tok{transform:translateX(14px)}
+.bruger-row{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--radius);border:.5px solid var(--brd);margin-bottom:4px;cursor:pointer;background:var(--s1);transition:all .12s}
+.bruger-row:hover{background:var(--s2)}
+.bruger-row.aktiv{border-color:var(--gm);background:var(--gbg)}
+.b-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;background:var(--s2);color:var(--txt2)}
+.bruger-row.aktiv .b-av{background:var(--gm);color:#fff}
+
+/* BOTTOM NAV */
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;display:flex;background:var(--s1);border-top:.5px solid var(--brd);z-index:50}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 4px 11px;cursor:pointer;border:none;background:none;font-family:inherit;color:var(--txt3);font-size:9px;gap:3px;transition:color .15s;position:relative}
+.nav-btn.active{color:var(--gm)}
+.nav-btn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.nav-badge{position:absolute;top:4px;right:calc(50% - 17px);background:var(--rm);color:#fff;font-size:8px;font-weight:700;min-width:14px;height:14px;border-radius:7px;display:none;align-items:center;justify-content:center;padding:0 3px}
+.nav-badge.show{display:flex}
+
+/* MODALS */
+.modal-bg{display:none;position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:flex-end}
+.modal-bg.open{display:flex}
+.modal{background:var(--s1);border-radius:var(--rl) var(--rl) 0 0;padding:18px 15px 26px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:13px;display:flex;align-items:center;justify-content:space-between;color:var(--txt)}
+.mclose{width:26px;height:26px;border-radius:50%;border:.5px solid var(--brd2);background:var(--s2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--txt3);font-size:16px;flex-shrink:0}
+.mlabel{font-size:11px;color:var(--txt2);margin-bottom:4px;margin-top:10px;display:block}
+.mlabel:first-of-type{margin-top:0}
+.minput{width:100%;padding:9px 11px;border-radius:var(--radius);border:.5px solid var(--brd2);font-size:14px;font-family:inherit;outline:none;color:var(--txt);background:var(--s1)}
+.minput:focus{border-color:var(--gm)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modal-tabs{display:flex;margin-bottom:13px;border:.5px solid var(--brd2);border-radius:var(--radius);overflow:hidden}
+.modal-tab{flex:1;padding:8px;font-size:12px;text-align:center;cursor:pointer;color:var(--txt2);background:var(--s2);font-family:inherit;border:none;transition:all .15s}
+.modal-tab.active{background:var(--gm);color:#fff;font-weight:600}
+.modal-btns{display:flex;gap:7px;margin-top:13px}
+.modal-btns button{flex:1;padding:10px;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.mbtn-cancel{border:.5px solid var(--brd2);background:var(--s2);color:var(--txt2)}
+.mbtn-ok{background:var(--gm);color:#fff;border:none}
+.tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.tpl{border:.5px solid var(--brd);border-radius:var(--radius);padding:9px;cursor:pointer;transition:all .15s;background:var(--s1)}
+.tpl:hover{border-color:var(--gm)}
+.tpl.sel{border-color:var(--gm);background:var(--gbg);border-width:1.5px}
+.tpl-icon{font-size:17px;margin-bottom:3px}
+.tpl-name{font-size:12px;font-weight:600;color:var(--txt)}
+.tpl-desc{font-size:10px;color:var(--txt3);margin-top:1px;line-height:1.3}
+.freq-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.fchip{font-size:11px;padding:4px 9px;border-radius:20px;border:.5px solid var(--brd2);cursor:pointer;color:var(--txt2);transition:all .12s}
+.fchip:hover{border-color:var(--gm);color:var(--g)}
+.fchip.sel{background:var(--gbg);color:var(--g);border-color:var(--gm);font-weight:600}
+.imp-row{display:flex;gap:5px}
+.imp-btn{flex:1;padding:7px;border-radius:var(--radius);border:.5px solid var(--brd);cursor:pointer;text-align:center;font-size:11px;font-weight:600;transition:all .12s;font-family:inherit;background:var(--s1)}
+.imp-n{color:var(--g)}.imp-n.sel{background:var(--gbg);border-color:var(--gm)}
+.imp-v{color:var(--a)}.imp-v.sel{background:var(--abg);border-color:var(--am)}
+.imp-h{color:var(--r)}.imp-h.sel{background:var(--rbg);border-color:var(--rm)}
+.tpl-extra{background:var(--s2);border-radius:var(--radius);padding:10px;margin-bottom:10px;border:.5px solid var(--brd);display:none}
+.sub-preview-row{display:flex;align-items:center;gap:7px;padding:5px 8px;background:var(--s2);border-radius:6px;margin-bottom:4px;font-size:12px;color:var(--txt2)}
+.sub-preview-row .dot{width:5px;height:5px;border-radius:50%;background:var(--gm);flex-shrink:0}
+
+/* UTIL */
+.divider{height:.5px;background:var(--brd);margin:8px 0}
+.btn-sm{padding:5px 10px;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;border:.5px solid var(--brd2);background:var(--s1);color:var(--txt);font-family:inherit}
+.btn-primary{background:var(--gm);color:#fff;border-color:var(--gm)}
+.btn-danger{background:var(--rbg);color:var(--r);border-color:var(--rm)}
+.empty-state{text-align:center;padding:40px 20px;color:var(--txt3);font-size:13px}
+.empty-ico{font-size:32px;margin-bottom:8px}
+.toast{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--txt);color:var(--s1);padding:8px 16px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;z-index:200}
+.toast.show{opacity:1}
+.adm-badge{font-size:9px;padding:2px 6px;border-radius:10px;background:var(--rbg);color:var(--r);border:.5px solid var(--rm)}
+mark{background:#fef08a;border-radius:2px;padding:0 1px}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px}
+@media print{.bottom-nav,.topbar,.modal-bg,.toast{display:none!important}body{padding:0;background:#fff}.app{max-width:100%;border:none;height:auto}}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN -->
+<div id="loginScreen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:24px;background:var(--bg)">
+  <div style="background:var(--s1);border:.5px solid var(--brd);border-radius:var(--rl);padding:30px 22px;width:100%;max-width:360px">
+    <div style="width:48px;height:48px;border-radius:12px;background:var(--gbg);border:1px solid var(--gm);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 12px">📋</div>
+    <div style="font-size:20px;font-weight:700;color:var(--txt);text-align:center;margin-bottom:3px">Patienttjek</div>
+    <div style="font-size:12px;color:var(--txt2);text-align:center;margin-bottom:20px">Klinisk plejeplan og patientoversigt</div>
+    <div id="loginMsg" style="display:none;padding:7px 11px;border-radius:var(--radius);background:var(--rbg);color:var(--r);font-size:12px;margin-bottom:10px;text-align:center;border:.5px solid var(--rm)"></div>
+
+    <!-- TAB SKIFT -->
+    <div style="display:flex;border:.5px solid var(--brd2);border-radius:var(--radius);overflow:hidden;margin-bottom:16px">
+      <button id="loginTab1" onclick="switchLoginTab(1)" style="flex:1;padding:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:inherit;background:var(--gm);color:#fff">👤 Bruger-login</button>
+      <button id="loginTab2" onclick="switchLoginTab(2)" style="flex:1;padding:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:inherit;background:var(--s2);color:var(--txt2)">🏥 Afdelingskode</button>
+    </div>
+
+    <!-- BRUGER-LOGIN -->
+    <div id="loginPanel1">
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:8px">Log ind med dit sygehus-brugernavn (fx <b>HT3RE</b>) og kode</div>
+      <input id="loginUser" type="text" placeholder="Brugernavn (fx HT3RE)" class="minput" style="margin-bottom:8px;text-transform:uppercase" onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
+      <input id="loginPass" type="password" placeholder="Adgangskode" class="minput" style="margin-bottom:4px" onkeydown="if(event.key==='Enter')doLoginUser()">
+      <div style="text-align:right;margin-bottom:10px">
+        <span onclick="showResetPanel()" style="font-size:11px;color:var(--b);cursor:pointer;text-decoration:underline dotted">Glemt kode?</span>
+      </div>
+      <button onclick="doLoginUser()" style="width:100%;padding:12px;background:var(--gm);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Log ind</button>
+      <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--txt3)">Bruger Firebase Authentication · GDPR-compliant</div>
+    </div>
+
+    <!-- GLEMT KODE / NULSTIL -->
+    <div id="resetPanel" style="display:none">
+      <div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:6px">🔑 Nulstil adgangskode</div>
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">Skriv dit brugernavn — du modtager en nulstillings-email fra Firebase</div>
+      <input id="resetUser" type="text" placeholder="Brugernavn (fx HT3RE)" class="minput" style="margin-bottom:10px;text-transform:uppercase">
+      <button onclick="doSendReset()" style="width:100%;padding:10px;background:var(--b);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px">Send nulstillings-email</button>
+      <div class="divider"></div>
+      <div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:6px;margin-top:10px">🔐 Skift adgangskode</div>
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:8px">Log ind med din nuværende kode og skift til en ny</div>
+      <input id="changeUser" type="text" placeholder="Brugernavn (fx HT3RE)" class="minput" style="margin-bottom:6px;text-transform:uppercase">
+      <input id="changeOld" type="password" placeholder="Nuværende kode" class="minput" style="margin-bottom:6px">
+      <input id="changeNew" type="password" placeholder="Ny kode (min. 8 tegn)" class="minput" style="margin-bottom:6px">
+      <input id="changeNew2" type="password" placeholder="Gentag ny kode" class="minput" style="margin-bottom:10px">
+      <button onclick="doChangePass()" style="width:100%;padding:10px;background:var(--gm);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Skift adgangskode</button>
+      <div style="text-align:center;margin-top:10px">
+        <span onclick="hideResetPanel()" style="font-size:11px;color:var(--b);cursor:pointer;text-decoration:underline dotted">← Tilbage til login</span>
+      </div>
+    </div>
+
+    <!-- AFDELINGSKODE -->
+    <div id="loginPanel2" style="display:none">
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:8px">Fælles adgang for hele afdelingen</div>
+      <input id="loginInput" type="password" placeholder="Afdelingskode (fx KP2-NEURO)" class="minput" style="letter-spacing:2px;margin-bottom:10px" onkeydown="if(event.key==='Enter')doLogin()">
+      <button onclick="doLogin()" id="loginBtn" style="width:100%;padding:12px;background:var(--gm);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Log ind med kode</button>
+      <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--txt3)">Demo-koder: DEMO · KP2-NEURO · KP2-URO</div>
+    </div>
+
+    <div style="text-align:center;margin-top:14px;font-size:10px;color:var(--txt3)">© Max Sony Bay Helgason · Helgasons Handyman · CVR 43931776</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-brand">
+    <div class="tb-icon">📋</div>
+    <div>
+      <div class="tb-title">Patienttjek</div>
+      <div class="tb-sub" id="topSub">Dag-vagt</div>
+    </div>
+  </div>
+  <div class="tb-right">
+    <span class="afd-pill" id="afdPill" onclick="goTo('indstillinger')">Afd. N</span>
+    <button class="icon-btn" id="themeBtn" onclick="toggleDark()" title="Tema">🌙</button>
+  </div>
+</div>
+
+<!-- STAT STRIP -->
+<div class="stat-strip" id="statStrip"></div>
+
+<!-- PATIENT TABS -->
+<div class="pt-tabs" id="ptTabs"></div>
+
+<!-- FILTER BANNER -->
+<div class="filter-banner" id="filterBanner">
+  <span id="filterLbl"></span>
+  <span class="filter-x" onclick="clearFilter()">× Ryd filter</span>
+</div>
+
+<!-- PAGES -->
+<div class="page active" id="page-patienter">
+  <div class="scroll" id="ptScroll">
+    <div id="ptBody"></div>
+  </div>
+</div>
+
+<div class="page" id="page-vagtopgaver">
+  <div class="scroll">
+    <div class="vt-hdr">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--txt)">Vagtopgaver</div>
+        <div style="font-size:11px;color:var(--txt2)" id="vtDate"></div>
+      </div>
+      <button class="btn-sm" onclick="nulstilVt()">↺ Nulstil</button>
+    </div>
+    <!-- VAGT-FILTER -->
+    <div style="display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn-sm" id="vtf-dag" onclick="setVagtFilter('dag')" style="border-color:var(--am);background:var(--abg);color:var(--a)">☀️ Dag</button>
+      <button class="btn-sm" id="vtf-aften" onclick="setVagtFilter('aften')" style="background:var(--s2);color:var(--txt2)">🌆 Aften</button>
+      <button class="btn-sm" id="vtf-nat" onclick="setVagtFilter('nat')" style="background:var(--s2);color:var(--txt2)">🌙 Nat</button>
+      <button class="btn-sm" id="vtf-alle" onclick="setVagtFilter('alle')" style="background:var(--s2);color:var(--txt2)">📋 Vis alle</button>
+    </div>
+    <div style="font-size:11px;color:var(--txt2);margin-bottom:10px" id="vtVagtHdr">Viser: Dag-vagt + fælles opgaver</div>
+    <div class="vt-prog"><div class="vt-track"><div class="vt-fill" id="vtFill" style="width:0%"></div></div><div class="vt-pct" id="vtPct">0%</div></div>
+    <div id="vtList"></div>
+    <div style="display:flex;gap:6px;margin-top:12px">
+      <input id="vtInput" placeholder="Tilføj vagtopgave til denne vagt…" class="minput" style="flex:1" onkeydown="if(event.key==='Enter')addVt()">
+      <button class="btn-sm btn-primary" onclick="addVt()">+ Tilføj</button>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-nyheder">
+  <div class="ny-topbar">
+    <div class="ny-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="nySearch" placeholder="Søg i nyhedsbreve…" oninput="renderNews()">
+    </div>
+    <span class="ny-afd-chip" id="nyAfdChip">Kun egne nyheder</span>
+  </div>
+  <div class="ny-list" id="nyList"></div>
+</div>
+
+<div class="page" id="page-vagtoverlevering">
+  <div class="scroll">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--txt)">Vagtoverlevering</div>
+        <div style="font-size:11px;color:var(--txt2)" id="vovDato"></div>
+      </div>
+      <button class="btn-sm" onclick="window.print()">🖨 Udskriv</button>
+    </div>
+    <div id="vovContent"></div>
+    <div style="margin-top:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:6px">📝 Vagtnote</div>
+      <textarea id="vovNote" rows="4" class="minput" style="resize:vertical;font-size:12px" placeholder="Særlige bemærkninger til næste vagt…" oninput="vagtNote=this.value;save()"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-indstillinger">
+  <div style="flex:1;overflow-y:auto;padding-bottom:80px">
+    <div class="set-sec">
+      <div class="set-hdr">Konto</div>
+      <div id="kontoInfo" style="display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:.5px solid var(--brd);margin-bottom:8px"></div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:7px">Skift bruger (demo)</div>
+      <div id="brugerListe"></div>
+    </div>
+    <div class="set-sec">
+      <div class="set-hdr">Afdeling</div>
+      <div class="set-row"><span>Afdelingsnavn</span><span class="set-val" id="setAfdNavn">—</span></div>
+      <div class="set-row"><span>Vagtlængde</span><span class="set-val">8 timer</span></div>
+    </div>
+    <div class="set-sec">
+      <div class="set-hdr">Tema</div>
+      <div class="set-row">Mørkt tema<div class="tog off" id="darkTog" onclick="toggleDark()"><div class="tok"></div></div></div>
+    </div>
+    <div class="set-sec" id="adminSec" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="set-hdr" style="margin:0">🔐 Admin — Nyhedsstyring</div>
+        <span class="adm-badge">Kun leder</span>
+      </div>
+      <div id="adminNyListe"></div>
+      <button class="btn-sm btn-primary" style="width:100%;margin-top:6px;padding:9px" onclick="openModal('nyhedModal')">+ Tilføj nyhedsbrev</button>
+      <div style="margin-top:12px;border-top:.5px solid var(--brd);padding-top:10px">
+        <div style="font-size:12px;font-weight:600;color:var(--txt);margin-bottom:2px">Active Directory SSO</div>
+        <div style="font-size:11px;color:var(--txt2);margin-bottom:7px">Kode til OUH AD via SAML — kræver Regional IT</div>
+        <button class="btn-sm" style="width:100%;border-color:var(--bm);color:var(--b);background:var(--bbg)" onclick="openModal('ssoModal')">🏥 Vis SSO-integrationskode</button>
+      </div>
+    </div>
+    <div class="set-sec">
+      <div class="set-hdr">🔐 Skift adgangskode</div>
+      <div id="inAppChangeMsg" style="display:none;padding:6px 10px;border-radius:var(--radius);font-size:11px;margin-bottom:8px;text-align:center"></div>
+      <input id="inAppOld" type="password" placeholder="Nuværende kode" class="minput" style="margin-bottom:6px">
+      <input id="inAppNew" type="password" placeholder="Ny kode (min. 8 tegn)" class="minput" style="margin-bottom:6px">
+      <input id="inAppNew2" type="password" placeholder="Gentag ny kode" class="minput" style="margin-bottom:10px">
+      <button onclick="doInAppChangePass()" class="btn-sm btn-primary" style="width:100%;padding:9px">Skift adgangskode</button>
+    </div>
+    <div class="set-sec" style="border-bottom:none">
+      <button class="btn-sm" style="width:100%;color:var(--r);border-color:var(--rm);background:var(--rbg)" onclick="doLogout()">🚪 Log ud</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nb-patienter" onclick="goTo('patienter')">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Patienter
+  </button>
+  <button class="nav-btn" id="nb-vagtopgaver" onclick="goTo('vagtopgaver')" style="position:relative">
+    <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Vagtopgaver
+    <span class="nav-badge" id="vtBadge">0</span>
+  </button>
+  <button class="nav-btn" id="nb-nyheder" onclick="goTo('nyheder')" style="position:relative">
+    <svg viewBox="0 0 24 24"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8V6Z"/></svg>
+    Nyheder
+    <span class="nav-badge" id="nyBadge">0</span>
+  </button>
+  <button class="nav-btn" id="nb-vagtoverlevering" onclick="goTo('vagtoverlevering')">
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Vagt
+  </button>
+  <button class="nav-btn" id="nb-indstillinger" onclick="goTo('indstillinger')">
+    <svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+    Indstillinger
+  </button>
+</nav>
+
+</div><!-- end mainApp -->
+
+<!-- MODALS -->
+
+<!-- TILFØJ PATIENT -->
+<div class="modal-bg" id="addPtModal">
+<div class="modal">
+  <div class="modal-title">Ny patient <span class="mclose" onclick="closeModal('addPtModal')">×</span></div>
+  <label class="mlabel">Seng / Stue</label>
+  <input class="minput" id="newSeng" placeholder="fx Seng 2 / Stue 41 Seng 1">
+  <label class="mlabel">Navn</label>
+  <input class="minput" id="newNavn" placeholder="Patientens navn">
+  <label class="mlabel">Diagnose (valgfrit)</label>
+  <input class="minput" id="newDiag" placeholder="fx Apopleksi, Epilepsi…">
+  <div class="modal-btns">
+    <button class="mbtn-cancel" onclick="closeModal('addPtModal')">Annuller</button>
+    <button class="mbtn-ok" onclick="addPt()">Tilføj patient</button>
+  </div>
+</div>
+</div>
+
+<!-- REDIGER PATIENT -->
+<div class="modal-bg" id="editPtModal">
+<div class="modal">
+  <div class="modal-title">Rediger patient <span class="mclose" onclick="closeModal('editPtModal')">×</span></div>
+  <input type="hidden" id="editPtId">
+  <label class="mlabel">Seng / Stue</label>
+  <input class="minput" id="editSeng">
+  <label class="mlabel">Navn</label>
+  <input class="minput" id="editNavn">
+  <label class="mlabel">Diagnose</label>
+  <input class="minput" id="editDiag">
+  <div class="modal-btns">
+    <button class="mbtn-cancel" onclick="closeModal('editPtModal')">Annuller</button>
+    <button class="mbtn-ok" onclick="saveEditPt()">Gem</button>
+  </div>
+</div>
+</div>
+
+<!-- TILFØJ OPGAVE -->
+<div class="modal-bg" id="addTaskModal">
+<div class="modal">
+  <div class="modal-title" id="taskModalTitle">Tilføj opgave <span class="mclose" onclick="closeModal('addTaskModal')">×</span></div>
+  <input type="hidden" id="taskPid">
+  <input type="hidden" id="taskEditId">
+  <div class="modal-tabs">
+    <button class="modal-tab active" id="mtab-skabelon" onclick="switchTaskTab('skabelon')">Skabelon</button>
+    <button class="modal-tab" id="mtab-custom" onclick="switchTaskTab('custom')">Brugerdefineret</button>
+  </div>
+
+  <!-- SKABELON -->
+  <div id="taskTab-skabelon">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);margin-bottom:7px">Vælg klinisk skabelon</div>
+    <div class="tpl-grid" id="tplGrid"></div>
+    <div class="tpl-extra" id="tplExtra"></div>
+    <div class="divider"></div>
+    <label class="mlabel">Frekvens</label>
+    <div class="freq-chips" id="tplFreqChips">
+      <div class="fchip" onclick="selFreq(this,'Én gang')">Én gang</div>
+      <div class="fchip sel" onclick="selFreq(this,'Dagligt')">Dagligt</div>
+      <div class="fchip" onclick="selFreq(this,'2× dagligt')">2×</div>
+      <div class="fchip" onclick="selFreq(this,'3× dagligt')">3×</div>
+      <div class="fchip" onclick="selFreq(this,'Hver 4. time')">Hver 4t</div>
+      <div class="fchip" onclick="selFreq(this,'Hver vagt')">Hver vagt</div>
+    </div>
+    <div class="row2" style="margin-top:10px">
+      <div><label class="mlabel">Starttidspunkt</label><input class="minput" type="time" id="tplTime" value="08:00"></div>
+      <div><label class="mlabel">Vigtighed</label>
+        <select class="minput" id="tplImp"><option value="normal">Normal</option><option value="vigtigt">Vigtigt</option><option value="haster">Haster</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- BRUGERDEFINERET -->
+  <div id="taskTab-custom" style="display:none">
+    <label class="mlabel">Opgavetitel</label>
+    <input class="minput" id="custTxt" placeholder="fx Lejreskift, Blodtryk, Samtale…">
+    <div class="row2" style="margin-top:2px">
+      <div><label class="mlabel">Tidspunkt</label><input class="minput" type="time" id="custTime" value="08:00"></div>
+      <div><label class="mlabel">Frist (valgfrit)</label><input class="minput" type="date" id="custDate"></div>
+    </div>
+    <label class="mlabel">Frekvens</label>
+    <div class="freq-chips" id="custFreqChips">
+      <div class="fchip sel" onclick="selFreq2(this,'Én gang')">Én gang</div>
+      <div class="fchip" onclick="selFreq2(this,'Dagligt')">Dagligt</div>
+      <div class="fchip" onclick="selFreq2(this,'2× dagligt')">2×</div>
+      <div class="fchip" onclick="selFreq2(this,'3× dagligt')">3×</div>
+      <div class="fchip" onclick="selFreq2(this,'Hver 4. time')">Hver 4t</div>
+      <div class="fchip" onclick="selFreq2(this,'Hver vagt')">Hver vagt</div>
+    </div>
+    <label class="mlabel">Vigtighed</label>
+    <div class="imp-row">
+      <button class="imp-btn imp-n sel" onclick="selImp(this,'normal')">Normal</button>
+      <button class="imp-btn imp-v" onclick="selImp(this,'vigtigt')">Vigtigt</button>
+      <button class="imp-btn imp-h" onclick="selImp(this,'haster')">Haster</button>
+    </div>
+    <label class="mlabel">Note (valgfrit)</label>
+    <input class="minput" id="custNote" placeholder="fx Notér i EPJ, kontakt læge ved afvigelse…">
+    <div class="divider" style="margin-top:12px"></div>
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);margin-bottom:6px">Underopgaver</div>
+    <div id="custSubList"></div>
+    <div style="display:flex;gap:5px">
+      <input class="minput" id="custSubInp" placeholder="Tilføj underopgave…" style="flex:1" onkeydown="if(event.key==='Enter')addCustSub()">
+      <button class="btn-sm" onclick="addCustSub()">+</button>
+    </div>
+  </div>
+
+  <div class="modal-btns">
+    <button class="mbtn-cancel" onclick="closeModal('addTaskModal')">Annuller</button>
+    <button class="mbtn-ok" onclick="saveTask()">Gem opgave</button>
+  </div>
+</div>
+</div>
+
+<!-- TILFØJ UNDEROPGAVE (avanceret) -->
+<div class="modal-bg" id="addSubModal">
+<div class="modal">
+  <div class="modal-title">Tilføj underopgave <span class="mclose" onclick="closeModal('addSubModal')">×</span></div>
+  <input type="hidden" id="subPid"><input type="hidden" id="subTid">
+  <label class="mlabel">Titel</label>
+  <input class="minput" id="subTxt" placeholder="fx Dokumentér i EPJ">
+  <label class="mlabel">Note (valgfrit)</label>
+  <input class="minput" id="subNote" placeholder="">
+  <div class="row2">
+    <div><label class="mlabel">Frist</label><input class="minput" type="date" id="subDate"></div>
+    <div><label class="mlabel">Tidspunkt</label><input class="minput" type="time" id="subTime"></div>
+  </div>
+  <label class="mlabel">Vigtighed</label>
+  <div class="imp-row">
+    <button class="imp-btn imp-n sel" id="simp-normal" onclick="selSubImp('normal')">Normal</button>
+    <button class="imp-btn imp-v" id="simp-vigtigt" onclick="selSubImp('vigtigt')">Vigtigt</button>
+    <button class="imp-btn imp-h" id="simp-haster" onclick="selSubImp('haster')">Haster</button>
+  </div>
+  <div class="modal-btns">
+    <button class="mbtn-cancel" onclick="closeModal('addSubModal')">Annuller</button>
+    <button class="mbtn-ok" onclick="saveSub()">Gem underopgave</button>
+  </div>
+</div>
+</div>
+
+<!-- NYHEDSBREV -->
+<div class="modal-bg" id="nyhedModal">
+<div class="modal">
+  <div class="modal-title">Tilføj nyhedsbrev <span class="mclose" onclick="closeModal('nyhedModal')">×</span></div>
+  <label class="mlabel">Titel</label><input class="minput" id="nyTitel" placeholder="fx N Sengeafsnit Nyhedsbrev">
+  <label class="mlabel">Uge / dato</label><input class="minput" id="nyUge" placeholder="fx Uge 17 – 2026">
+  <label class="mlabel">Indhold</label>
+  <textarea class="minput" id="nyTekst" rows="5" placeholder="Indsæt tekst fra nyhedsbrev…" style="resize:vertical"></textarea>
+  <div style="font-size:10px;color:var(--txt3);margin-top:5px">I produktion: upload .pptx direkte via Firebase Storage</div>
+  <div class="modal-btns">
+    <button class="mbtn-cancel" onclick="closeModal('nyhedModal')">Annuller</button>
+    <button class="mbtn-ok" onclick="gemNyhed()">Gem nyhedsbrev</button>
+  </div>
+</div>
+</div>
+
+<!-- SSO MODAL -->
+<div class="modal-bg" id="ssoModal">
+<div class="modal" style="max-height:90vh">
+  <div class="modal-title">SSO — Active Directory <span class="mclose" onclick="closeModal('ssoModal')">×</span></div>
+  <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">Indsæt i <code style="background:var(--s2);padding:1px 4px;border-radius:4px">firebase/auth.js</code> — kræver Regional IT</div>
+  <div style="background:#0d1117;border-radius:var(--radius);padding:11px;overflow:auto;font-family:monospace;font-size:10px;color:#e6edf3;line-height:1.65;max-height:44vh;overflow-y:auto">
+<pre style="margin:0;white-space:pre-wrap"><span style="color:#8b949e">// OUH Active Directory SSO via SAML 2.0</span>
+<span style="color:#ff7b72">import</span> { getAuth, SAMLAuthProvider,
+  signInWithPopup } <span style="color:#ff7b72">from</span> <span style="color:#a5d6ff">"firebase/auth"</span>;
+<span style="color:#ff7b72">import</span> { getFirestore, doc, setDoc,
+  getDocs, collection, where, query,
+  serverTimestamp } <span style="color:#ff7b72">from</span> <span style="color:#a5d6ff">"firebase/firestore"</span>;
+
+<span style="color:#ff7b72">const</span> provider = <span style="color:#ff7b72">new</span> SAMLAuthProvider(
+  <span style="color:#a5d6ff">"saml.ouh-active-directory"</span>
+);
+<span style="color:#ff7b72">async function</span> loginMedAD() {
+  <span style="color:#ff7b72">const</span> result = <span style="color:#ff7b72">await</span> signInWithPopup(
+    getAuth(), provider);
+  <span style="color:#ff7b72">const</span> u = result.user;
+  <span style="color:#ff7b72">await</span> setDoc(doc(db,<span style="color:#a5d6ff">"brugere"</span>,u.uid),{
+    navn: u.displayName, email: u.email,
+    afdeling, rolle,
+    sidstLogin: serverTimestamp()
+  },{ merge:<span style="color:#ff7b72">true</span> });
+}
+<span style="color:#8b949e">// Firestore regler:</span>
+<span style="color:#ffa657">match /nyheder/{id} {
+  allow read: if request.auth != null
+    &amp;&amp; get(/brugere/$(request.auth.uid))
+       .data.afdeling == resource.data.afd;
+  allow write,delete: if
+    get(/brugere/$(request.auth.uid))
+    .data.rolle == "leder";
+}
+match /brugere/{uid}/laestNyheder/{id}{
+  allow read,write:
+    if request.auth.uid == uid;
+}</span></pre>
+  </div>
+  <div class="modal-btns" style="margin-top:10px">
+    <button class="mbtn-cancel" onclick="closeModal('ssoModal')">Luk</button>
+    <button class="mbtn-ok" onclick="navigator.clipboard?.writeText(document.querySelector('#ssoModal pre').textContent);showToast('Kode kopieret!')">Kopiér kode</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ── CONSTANTS ────────────────────────────────────────────
+const CYCLE=['pending','done','alert','skip'];
+const SL={done:'Udført',pending:'Afventer',alert:'Handling',skip:'Ikke relevant'};
+const SB={done:'bd',pending:'bp',alert:'ba',skip:'bs'};
+const SS={done:'s-d',pending:'s-p',alert:'s-a',skip:'s-s'};
+const AVATARS=[['#E6F1FB','#0C447C'],['#EAF3DE','#27500A'],['#FAEEDA','#633806'],['#FCEBEB','#791F1F'],['#EEEDFE','#3C3489'],['#E1F5EE','#085041']];
+const IMP={normal:'Normal',vigtigt:'Vigtigt',haster:'Haster'};
+const TEMPLATES=[
+  {id:'medicin',icon:'💊',name:'Medicin',desc:'Dosering og administration',
+   extra:`<label class="mlabel">Præparat</label><input class="minput" id="ex-med" placeholder="fx Metoprolol 50mg">
+          <div class="row2"><div><label class="mlabel">Dosis</label><input class="minput" id="ex-dose" placeholder="fx 1 tablet"></div>
+          <div><label class="mlabel">Administration</label><select class="minput" id="ex-route"><option>Oralt</option><option>IV</option><option>SQ</option><option>Inhalation</option></select></div></div>`},
+  {id:'toks',icon:'❤️',name:'TOKS',desc:'Tidlig opsporing',
+   extra:`<div class="row2"><div><label class="mlabel">Interval</label><select class="minput" id="ex-toks"><option>Hver 4. time</option><option>Hver 8. time</option><option>Dagligt</option></select></div>
+          <div><label class="mlabel">Alarmniveau</label><select class="minput" id="ex-alarm"><option>Score ≥3</option><option>Score ≥2</option><option>Score ≥1</option></select></div></div>`},
+  {id:'fvc',icon:'🫁',name:'FVC / Lunge',desc:'Lungefunktionsmåling',
+   extra:`<div class="row2"><div><label class="mlabel">Antal/dag</label><select class="minput" id="ex-fvcn"><option>1×</option><option>2× dagligt</option><option>3× dagligt</option><option>4× dagligt</option></select></div>
+          <div><label class="mlabel">Grænseværdi</label><input class="minput" id="ex-fvcval" placeholder="fx <80% → læge"></div></div>`},
+  {id:'sss',icon:'🧠',name:'SSS',desc:'Scandinavian Stroke Scale',
+   extra:`<div class="row2"><div><label class="mlabel">Interval</label><select class="minput" id="ex-sss"><option>Ankomst + 24h</option><option>Dagligt</option><option>2× dagligt</option></select></div>
+          <div><label class="mlabel">Kontakt ved fald</label><input class="minput" id="ex-ssscont" placeholder="fx Neurolog"></div></div>`},
+  {id:'nihss',icon:'📋',name:'NIHSS',desc:'Stroke severity scoring',
+   extra:`<label class="mlabel">Tidspunkt</label><select class="minput" id="ex-nihss"><option>Ved indlæggelse</option><option>24 timer</option><option>72 timer</option><option>Ugentligt</option></select>`},
+  {id:'blod',icon:'🩸',name:'Blodtryk / Vitale',desc:'BT, puls, temperatur',
+   extra:`<div class="row2"><div><label class="mlabel">Frekvens</label><select class="minput" id="ex-bln"><option>Hver time</option><option>Hver 2. time</option><option>Hver 4. time</option><option>4× dagligt</option></select></div>
+          <div><label class="mlabel">BT-mål</label><input class="minput" id="ex-btmaal" placeholder="fx <180/105 mmHg"></div></div>`},
+  {id:'kost',icon:'🍽',name:'Ernæring / Kost',desc:'Kostform og væske',
+   extra:`<div class="row2"><div><label class="mlabel">Kostform</label><select class="minput" id="ex-kost"><option>Normal</option><option>Modificeret</option><option>Blød</option><option>Flydende</option><option>Sonde</option></select></div>
+          <div><label class="mlabel">Væskemål ml/dag</label><input class="minput" id="ex-vaeske" placeholder="fx 1500"></div></div>`},
+  {id:'mob',icon:'🚶',name:'Mobilisering',desc:'Fysioterapi og forflytning',
+   extra:`<div class="row2"><div><label class="mlabel">Niveau</label><select class="minput" id="ex-mob"><option>Sengemobilisering</option><option>Siddende sengekant</option><option>Stå med hjælp</option><option>Gå med støtte</option><option>Selvstændig</option></select></div>
+          <div><label class="mlabel">Gange/dag</label><select class="minput" id="ex-mobn"><option>1×</option><option>2×</option><option>3×</option></select></div></div>`},
+];
+
+// ── STATE ─────────────────────────────────────────────────
+let patients=[], vtTasks=[], newsItems=[], vagtNote='';
+let activePt=null, activeFilter='all', currentPage='patienter';
+let dark=false, laest={}, deptName='Neurologisk Afd. N', deptAfd='N';
+let activeBruger={uid:'u1',n:'Plejepersonale',e:'',rolle:'plejepersonale',i:'PP'};
+let selTplId=null, selFreqVal='Dagligt', selFreq2Val='Én gang', selImpVal='normal', selSubImpVal='normal';
+let custSubs=[], editingTaskId=null, nextId=1;
+
+const DEMO_BRUGERE=[
+  {uid:'u1',n:'Jens Hansen',e:'jh@ouh.dk',rolle:'plejepersonale',i:'JH'},
+  {uid:'u2',n:'Lone Madsen',e:'lm@ouh.dk',rolle:'leder',i:'LM'},
+  {uid:'u3',n:'Ali Karimi',e:'ak@ouh.dk',rolle:'plejepersonale',i:'AK'},
+];
+
+function uid(){return 'id'+(nextId++)+'_'+Math.random().toString(36).slice(2,6);}
+function deepClone(x){return JSON.parse(JSON.stringify(x));}
+
+// ── PERSIST ──────────────────────────────────────────────
+function save(){localStorage.setItem('pt3_data',JSON.stringify({patients,vtTasks,vagtNote,laest,deptName,deptAfd}));}
+function load(){
+  try{
+    const d=JSON.parse(localStorage.getItem('pt3_data')||'null');
+    if(d){patients=d.patients||[];vtTasks=d.vtTasks||defaultVt();vagtNote=d.vagtNote||'';laest=d.laest||{};deptName=d.deptName||'Neurologisk Afd. N';deptAfd=d.deptAfd||'N';}
+    else vtTasks=defaultVt();
+  }catch{vtTasks=defaultVt();}
+}
+
+function defaultVt(){
+  // ── OUH Neurologisk sengeafsnit — vagtopgaver ──────────────
+  // Struktur fra OUH-portal: Ansvarshavende/Adm. (blå) + Patientpleje (grøn) per vagt
+  // Plus fælles praktiske opgaver
+  const d=new Date();
+  const h=d.getHours();
+  const aktiv=h>=7&&h<15?'dag':h>=15&&h<23?'aften':'nat';
+  return[
+    // ── DAG-VAGT — Ansvarshavende & Adm. ──
+    {id:uid(),txt:'Overlevering fra NV',sub:'Modtag rapport fra nattevagt',time:'07:00',done:false,sec:'Dag · Adm.',vagt:'dag'},
+    {id:uid(),txt:'Læse rapport',sub:'',time:'',done:false,sec:'Dag · Adm.',vagt:'dag'},
+    {id:uid(),txt:'Fælles morgenmøde',sub:'',time:'07:30',done:false,sec:'Dag · Adm.',vagt:'dag'},
+    {id:uid(),txt:'Tværfagligt møde i team',sub:'',time:'08:00',done:false,sec:'Dag · Adm.',vagt:'dag'},
+    {id:uid(),txt:'Kontrollere medicin til DV og give morgenmedicin',sub:'',time:'08:10',done:false,sec:'Dag · Adm.',vagt:'dag'},
+    {id:uid(),txt:'Forstuegang',sub:'',time:'08:45–10:30',done:false,sec:'Dag · Adm.',vagt:'dag'},
+    {id:uid(),txt:'Lave forløbsplan',sub:'',time:'',done:false,sec:'Dag · Adm.',vagt:'dag'},
+    {id:uid(),txt:'Dokumenter',sub:'',time:'',done:false,sec:'Dag · Adm.',vagt:'dag'},
+    // ── DAG-VAGT — Patientpleje ──
+    {id:uid(),txt:'Læse rapport / journal',sub:'',time:'07:00',done:false,sec:'Dag · Patientpleje',vagt:'dag'},
+    {id:uid(),txt:'Fælles morgenmøde',sub:'',time:'07:30',done:false,sec:'Dag · Patientpleje',vagt:'dag'},
+    {id:uid(),txt:'Tværfagligt møde i team',sub:'',time:'08:00',done:false,sec:'Dag · Patientpleje',vagt:'dag'},
+    {id:uid(),txt:'Blodsukker inden morgenmad',sub:'',time:'',done:false,sec:'Dag · Patientpleje',vagt:'dag'},
+    {id:uid(),txt:'Morgenmad',sub:'',time:'',done:false,sec:'Dag · Patientpleje',vagt:'dag'},
+    {id:uid(),txt:'Morgenpleje og mundpleje',sub:'',time:'',done:false,sec:'Dag · Patientpleje',vagt:'dag'},
+    {id:uid(),txt:'Lifte og mobilisere patienter til stol',sub:'',time:'',done:false,sec:'Dag · Patientpleje',vagt:'dag'},
+    {id:uid(),txt:'Blodsukker inden frokost',sub:'',time:'11:30',done:false,sec:'Dag · Patientpleje',vagt:'dag'},
+    {id:uid(),txt:'Frokost',sub:'',time:'',done:false,sec:'Dag · Patientpleje',vagt:'dag'},
+    {id:uid(),txt:'Lifte patienter til middagshvil',sub:'',time:'12:30',done:false,sec:'Dag · Patientpleje',vagt:'dag'},
+    {id:uid(),txt:'TOKS',sub:'Dokumentér i EPJ',time:'',done:false,sec:'Dag · Patientpleje',vagt:'dag'},
+    {id:uid(),txt:'Dokumenter',sub:'',time:'',done:false,sec:'Dag · Patientpleje',vagt:'dag'},
+    // ── AFTEN-VAGT — Ansvarshavende & Adm. ──
+    {id:uid(),txt:'Overlevering fra DV i personalestuen',sub:'',time:'15:00',done:false,sec:'Aften · Adm.',vagt:'aften'},
+    {id:uid(),txt:'Læse journal / rapport',sub:'',time:'',done:false,sec:'Aften · Adm.',vagt:'aften'},
+    {id:uid(),txt:'Kontrollere medicin til aftenvagt',sub:'',time:'16:00',done:false,sec:'Aften · Adm.',vagt:'aften'},
+    {id:uid(),txt:'Lave forløbsplaner der ikke blev nået i DV',sub:'',time:'',done:false,sec:'Aften · Adm.',vagt:'aften'},
+    {id:uid(),txt:'Printe patientlister til NV',sub:'',time:'22:30',done:false,sec:'Aften · Adm.',vagt:'aften'},
+    // ── AFTEN-VAGT — Patientpleje ──
+    {id:uid(),txt:'Læse journal / rapport',sub:'',time:'15:00',done:false,sec:'Aften · Patientpleje',vagt:'aften'},
+    {id:uid(),txt:'Kigge til patienter — tage op i kørestol, skifte ble, vende og lejre',sub:'',time:'16:00',done:false,sec:'Aften · Patientpleje',vagt:'aften'},
+    {id:uid(),txt:'Give sonde og tilbyde væske til patienter',sub:'',time:'',done:false,sec:'Aften · Patientpleje',vagt:'aften'},
+    {id:uid(),txt:'Måle blodsukker inden aftensmaden',sub:'',time:'17:00',done:false,sec:'Aften · Patientpleje',vagt:'aften'},
+    {id:uid(),txt:'Aftensmad',sub:'',time:'17:30',done:false,sec:'Aften · Patientpleje',vagt:'aften'},
+    {id:uid(),txt:'Samle bakke ind efter maden',sub:'',time:'18:30',done:false,sec:'Aften · Patientpleje',vagt:'aften'},
+    {id:uid(),txt:'Lifte patienter tilbage i seng',sub:'',time:'19:30',done:false,sec:'Aften · Patientpleje',vagt:'aften'},
+    {id:uid(),txt:'Gøre patienter natklar samt hjælpe med mundpleje',sub:'',time:'20:00',done:false,sec:'Aften · Patientpleje',vagt:'aften'},
+    {id:uid(),txt:'Bleskifte, blodsukker inden nat og TOKS',sub:'',time:'',done:false,sec:'Aften · Patientpleje',vagt:'aften'},
+    {id:uid(),txt:'Tømme KAD pose',sub:'',time:'',done:false,sec:'Aften · Patientpleje',vagt:'aften'},
+    {id:uid(),txt:'Dokumentere i EPJ',sub:'',time:'',done:false,sec:'Aften · Patientpleje',vagt:'aften'},
+    // ── NAT-VAGT — Ansvarshavende & Adm. ──
+    {id:uid(),txt:'Overlevering fra AV',sub:'',time:'23:00',done:false,sec:'Nat · Adm.',vagt:'nat'},
+    {id:uid(),txt:'Læse Journal / rapport',sub:'',time:'23:15',done:false,sec:'Nat · Adm.',vagt:'nat'},
+    {id:uid(),txt:'Tjekke medicin til nat + morgen + skaf medicin til DV',sub:'Tjek om præparater er sondevenlige',time:'01:00',done:false,sec:'Nat · Adm.',vagt:'nat'},
+    {id:uid(),txt:'Rette og ajourføre patientlister i Cetrea',sub:'Evt. oprette nye patienter',time:'01:00–05:30',done:false,sec:'Nat · Adm.',vagt:'nat'},
+    {id:uid(),txt:'Blodprøvebestilling til morgenrunden inden kl. 05:30',sub:'',time:'02:00',done:false,sec:'Nat · Adm.',vagt:'nat'},
+    {id:uid(),txt:'Cetrea med fremmøde til næste dag ordnes',sub:'',time:'',done:false,sec:'Nat · Adm.',vagt:'nat'},
+    {id:uid(),txt:'Påbegynde udskrivningsrapporter — evt. afsende forløbsplaner',sub:'',time:'',done:false,sec:'Nat · Adm.',vagt:'nat'},
+    // ── NAT-VAGT — Patientpleje ──
+    {id:uid(),txt:'Læse Journal / rapport',sub:'',time:'23:15',done:false,sec:'Nat · Patientpleje',vagt:'nat'},
+    {id:uid(),txt:'Kigge til alle patienter — tjekke IV væsker, dropfunktion, klokkesnor, seng ned til gulvet',sub:'',time:'00:00',done:false,sec:'Nat · Patientpleje',vagt:'nat'},
+    {id:uid(),txt:'Vende patienter + nødvendige målinger BG',sub:'',time:'03:00',done:false,sec:'Nat · Patientpleje',vagt:'nat'},
+    {id:uid(),txt:'Vende patienterne + TOKS + Sonde',sub:'',time:'05:30',done:false,sec:'Nat · Patientpleje',vagt:'nat'},
+    {id:uid(),txt:'Tage imod nye patienter + ankomststatus (hvis mangler)',sub:'',time:'',done:false,sec:'Nat · Patientpleje',vagt:'nat'},
+    {id:uid(),txt:'Kost- og væskeskemaer udregnes og dokumenteres i EPJ',sub:'Kan skrives "skønnet indtag" ved fejl i udførelse',time:'',done:false,sec:'Nat · Patientpleje',vagt:'nat'},
+    {id:uid(),txt:'Dokumentere fra natten i EPJ',sub:'',time:'',done:false,sec:'Nat · Patientpleje',vagt:'nat'},
+    {id:uid(),txt:'Skrive TOKS-værdier ind i EPJ',sub:'',time:'',done:false,sec:'Nat · Patientpleje',vagt:'nat'},
+    // ── FÆLLES — Alle vagter ──
+    {id:uid(),txt:'Oprydning stuer',sub:'',time:'',done:false,sec:'Fælles praktisk',vagt:'alle'},
+    {id:uid(),txt:'Rydde op i skyllerum (gule kasser, tøjsække, bækkener)',sub:'',time:'',done:false,sec:'Fælles praktisk',vagt:'alle'},
+    {id:uid(),txt:'Tjek ilt og sug',sub:'',time:'',done:false,sec:'Fælles praktisk',vagt:'alle'},
+    {id:uid(),txt:'Flyt brikker når aktuelt',sub:'',time:'',done:false,sec:'Fælles praktisk',vagt:'alle'},
+    {id:uid(),txt:'Tømme fyldte skraldespande på alle patientstuer',sub:'',time:'',done:false,sec:'Fælles praktisk',vagt:'alle'},
+    {id:uid(),txt:'Oprydning kontor + personalestue',sub:'',time:'',done:false,sec:'Fælles praktisk',vagt:'alle'},
+    {id:uid(),txt:'Fastvagt afløses min. 2 gange i vagten (hvis relevant)',sub:'',time:'',done:false,sec:'Fælles praktisk',vagt:'alle'},
+    // ── FÆLLES — Nattevagt ekstra ──
+    {id:uid(),txt:'Slukke alle computere og spritte af (inkl. tastatur og mus)',sub:'',time:'',done:false,sec:'Nat · Ekstra praktisk',vagt:'nat'},
+    {id:uid(),txt:'Køkken ryddes op',sub:'',time:'',done:false,sec:'Nat · Ekstra praktisk',vagt:'nat'},
+    {id:uid(),txt:'Fylde op i køleskabet (juice, saft, danskvand, cola + isterninger)',sub:'',time:'',done:false,sec:'Nat · Ekstra praktisk',vagt:'nat'},
+    {id:uid(),txt:'Køleskabet tømmes for madrester',sub:'',time:'',done:false,sec:'Nat · Ekstra praktisk',vagt:'nat'},
+    {id:uid(),txt:'Beskidte madvogn og madcontainer køres ud — ren vogn sættes på gangen',sub:'',time:'',done:false,sec:'Nat · Ekstra praktisk',vagt:'nat'},
+    {id:uid(),txt:'Mobiltelefoner, iPad, bækkenstole og BT-apparater til opladning',sub:'',time:'',done:false,sec:'Nat · Ekstra praktisk',vagt:'nat'},
+    {id:uid(),txt:'Alle telefoner aftørres med spritserviet',sub:'',time:'',done:false,sec:'Nat · Ekstra praktisk',vagt:'nat'},
+    {id:uid(),txt:'Opfyldning og oprydning i medicinrumstuen',sub:'',time:'',done:false,sec:'Nat · Ekstra praktisk',vagt:'nat'},
+    {id:uid(),txt:'Sæt labels i medicinbakkerne',sub:'',time:'',done:false,sec:'Nat · Ekstra praktisk',vagt:'nat'},
+    {id:uid(),txt:'Opvaskemaskinen tømmes og tingene sættes på plads',sub:'',time:'',done:false,sec:'Nat · Ekstra praktisk',vagt:'nat'},
+  ];
+}
+
+// ── AUTH + FIREBASE ────────────────────────────────────────
+// Firebase config — erstat FB_API_KEY med din rigtige nøgle fra Firebase Console
+const FB_BASE='https://patientertjek-default-rtdb.europe-west1.firebasedatabase.app';
+const FB_AUTH_URL='https://identitytoolkit.googleapis.com/v1/accounts';
+let FB_API_KEY='AIzaSyDBKvfijAUyH6EtRTyHhvQRKi4-SMatNww';
+let _fbToken=null,_fbUid=null,_pollTimer=null;
+
+function switchLoginTab(n){
+  document.getElementById('loginPanel1').style.display=n===1?'block':'none';
+  document.getElementById('loginPanel2').style.display=n===2?'block':'none';
+  document.getElementById('resetPanel').style.display='none';
+  document.getElementById('loginTab1').style.cssText=`flex:1;padding:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:inherit;background:${n===1?'var(--gm)':'var(--s2)'};color:${n===1?'#fff':'var(--txt2)'}`;
+  document.getElementById('loginTab2').style.cssText=`flex:1;padding:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:inherit;background:${n===2?'var(--gm)':'var(--s2)'};color:${n===2?'#fff':'var(--txt2)'}`;
+}
+
+function showResetPanel(){
+  document.getElementById('loginPanel1').style.display='none';
+  document.getElementById('loginPanel2').style.display='none';
+  document.getElementById('resetPanel').style.display='block';
+  // Kopiér brugernavn over
+  const u=document.getElementById('loginUser').value;
+  if(u){document.getElementById('resetUser').value=u;document.getElementById('changeUser').value=u;}
+}
+function hideResetPanel(){
+  document.getElementById('resetPanel').style.display='none';
+  document.getElementById('loginPanel1').style.display='block';
+}
+
+async function doSendReset(){
+  const user=(document.getElementById('resetUser').value||'').trim().toUpperCase();
+  if(!user){showLoginMsg('Indtast dit brugernavn');return;}
+  const email=user.toLowerCase()+'@ouh.patienttjek.dk';
+  try{
+    const res=await fetch(`${FB_AUTH_URL}:sendOobCode?key=${FB_API_KEY}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({requestType:'PASSWORD_RESET',email})
+    });
+    const data=await res.json();
+    if(data.email){
+      showLoginMsg('✓ Nulstillings-email sendt til din registrerede email-adresse',false);
+    } else if(data.error?.message?.includes('EMAIL_NOT_FOUND')){
+      showLoginMsg('Bruger ikke fundet — kontakt IT for oprettelse');
+    } else {
+      showLoginMsg('Fejl: '+( data.error?.message||'Ukendt fejl'));
+    }
+  }catch{
+    showLoginMsg('Netværksfejl — prøv igen');
+  }
+}
+
+async function doChangePass(){
+  const user=(document.getElementById('changeUser').value||'').trim().toUpperCase();
+  const oldPass=(document.getElementById('changeOld').value||'').trim();
+  const newPass=(document.getElementById('changeNew').value||'').trim();
+  const newPass2=(document.getElementById('changeNew2').value||'').trim();
+  if(!user||!oldPass||!newPass){showLoginMsg('Udfyld alle felter');return;}
+  if(newPass!==newPass2){showLoginMsg('De to nye koder er ikke ens');return;}
+  if(newPass.length<8){showLoginMsg('Ny kode skal være mindst 8 tegn');return;}
+  if(newPass===oldPass){showLoginMsg('Ny kode må ikke være den samme som den gamle');return;}
+
+  const email=user.toLowerCase()+'@ouh.patienttjek.dk';
+  showLoginMsg('Skifter kode...',false);
+  try{
+    // 1. Log ind med den gamle kode
+    const loginRes=await fetch(`${FB_AUTH_URL}:signInWithPassword?key=${FB_API_KEY}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:oldPass,returnSecureToken:true})
+    });
+    const loginData=await loginRes.json();
+    if(!loginData.idToken){
+      showLoginMsg('Nuværende kode er forkert');return;
+    }
+    // 2. Opdatér til ny kode
+    const changeRes=await fetch(`${FB_AUTH_URL}:update?key=${FB_API_KEY}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({idToken:loginData.idToken,password:newPass,returnSecureToken:true})
+    });
+    const changeData=await changeRes.json();
+    if(changeData.idToken){
+      showLoginMsg('✓ Kode skiftet! Log ind med din nye kode.',false);
+      setTimeout(()=>{
+        hideResetPanel();
+        document.getElementById('loginUser').value=user;
+        document.getElementById('loginPass').value='';
+        ['changeOld','changeNew','changeNew2'].forEach(id=>{document.getElementById(id).value='';});
+      },1800);
+    } else {
+      showLoginMsg('Fejl ved skift: '+(changeData.error?.message||'Prøv igen'));
+    }
+  }catch{
+    showLoginMsg('Netværksfejl — prøv igen');
+  }
+}
+
+async function doLoginUser(){
+  const user=(document.getElementById('loginUser').value||'').trim().toUpperCase();
+  const pass=(document.getElementById('loginPass').value||'').trim();
+  if(!user||!pass){showLoginMsg('Indtast brugernavn og adgangskode');return;}
+
+  showLoginMsg('Logger ind...',false);
+
+  // Email til Firebase: brugernavn@ouh.patienttjek.dk
+  const email=user.toLowerCase()+'@ouh.patienttjek.dk';
+
+  try{
+    if(FB_API_KEY&&FB_API_KEY.length>10){
+      const res=await fetch(`${FB_AUTH_URL}:signInWithPassword?key=${FB_API_KEY}`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email,password:pass,returnSecureToken:true})
+      });
+      const data=await res.json();
+      if(data.idToken){
+        _fbToken=data.idToken; _fbUid=data.localId;
+        // Hent bruger-profil fra Firebase
+        const profUrl=`${FB_BASE}/brugere/${_fbUid}.json?auth=${_fbToken}`;
+        const pr=await fetch(profUrl);
+        const profil=pr.ok?await pr.json():null;
+        activeBruger={uid:_fbUid,n:profil?.navn||user,e:email,rolle:profil?.rolle||'plejepersonale',i:(profil?.navn||user).split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||user.slice(0,2)};
+        if(profil?.afd){deptAfd=profil.afd;deptName=profil.deptName||'Afd. '+profil.afd;}
+        localStorage.setItem('pt3_session',JSON.stringify({uid:_fbUid,token:_fbToken,user,deptName,deptAfd,isUser:true}));
+        await pullFromCloud(); showApp(); renderAll(); updateBadges(); startPoll();
+        return;
+      } else {
+        if(data.error?.message?.includes('EMAIL_NOT_FOUND')){
+          showLoginMsg('Bruger ikke oprettet — kontakt IT');return;
+        }
+        if(data.error?.message?.includes('INVALID_PASSWORD')){
+          showLoginMsg('Forkert adgangskode');return;
+        }
+      }
+    }
+    // Demo/offline fallback (bruges når Firebase ikke er konfigureret)
+    _fbUid='local_'+user;
+    activeBruger={uid:_fbUid,n:user,e:user.toLowerCase()+'@ouh.dk',rolle:'plejepersonale',i:user.slice(0,2)};
+    localStorage.setItem('pt3_session',JSON.stringify({uid:_fbUid,user,deptName,deptAfd,isUser:true,isOffline:true}));
+    load(); showApp(); renderAll(); updateBadges();
+    showToast('Lokalt login — Firebase ikke konfigureret (erstat FB_API_KEY)');
+  }catch(e){
+    _fbUid='offline_'+user;
+    activeBruger={uid:_fbUid,n:user,e:user.toLowerCase()+'@ouh.dk',rolle:'plejepersonale',i:user.slice(0,2)};
+    localStorage.setItem('pt3_session',JSON.stringify({uid:_fbUid,user,deptName,deptAfd,isUser:true,isOffline:true}));
+    load(); showApp(); renderAll(); updateBadges();
+    showToast('Offline-tilstand');
+  }
+}
+
+async function pullFromCloud(){
+  try{
+    const auth=_fbToken?`?auth=${_fbToken}`:'';
+    const r=await fetch(`${FB_BASE}/afdelinger/${deptAfd.toLowerCase()}/data.json${auth}`);
+    if(!r.ok)return;const d=await r.json();if(!d)return;
+    if(d.patients)patients=d.patients;
+    if(d.vtTasks)vtTasks=d.vtTasks;
+    if(d.vagtNote)vagtNote=d.vagtNote;
+    if(d.laest)laest={...laest,...d.laest};
+    saveLocal();
+  }catch{}
+}
+async function pushToCloud(){
+  try{
+    const auth=_fbToken?`?auth=${_fbToken}`:'';
+    await fetch(`${FB_BASE}/afdelinger/${deptAfd.toLowerCase()}/data.json${auth}`,{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({patients,vtTasks,vagtNote,laest,updatedAt:Date.now()})
+    });
+  }catch{}
+}
+function startPoll(){
+  if(_pollTimer)clearInterval(_pollTimer);
+  _pollTimer=setInterval(async()=>{await pullFromCloud();renderAll();updateBadges();},10000);
+}
+
+function doLogin(){
+  const code=(document.getElementById('loginInput').value||'').trim().toUpperCase();
+  if(!code){showLoginMsg('Indtast en kode');return;}
+  const dept={'KP2-NEURO':{name:'Neurologisk Afd. N',afd:'N'},'KP2-URO':{name:'Urologisk Afd. U',afd:'U'},'KP2-KARDIO':{name:'Kardiologisk Afd. K',afd:'K'},'KP2-ORTO':{name:'Ortopædisk Afd. O',afd:'O'},'KP2-PSY':{name:'Psykiatrisk Afd. P',afd:'P'},'DEMO':{name:'Demo Afd.',afd:'N'}}[code];
+  if(!dept){showLoginMsg('Ugyldig kode');return;}
+  deptName=dept.name; deptAfd=dept.afd;
+  localStorage.setItem('pt3_session',JSON.stringify({deptName,deptAfd,code}));
+  load(); showApp(); renderAll(); updateBadges();
+}
+
+function showLoginMsg(m,isErr=true){
+  const el=document.getElementById('loginMsg');el.textContent=m;el.style.display='block';
+  el.style.background=isErr?'var(--rbg)':'var(--bbg)';
+  el.style.color=isErr?'var(--r)':'var(--b)';
+  el.style.borderColor=isErr?'var(--rm)':'var(--bm)';
+}
+
+function showApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('mainApp').style.display='flex';
+  document.getElementById('afdPill').textContent='Afd. '+deptAfd;
+  const d=new Date();
+  const h=d.getHours();
+  const vagtNavn=h>=7&&h<15?'Dag-vagt':h>=15&&h<23?'Aften-vagt':'Nat-vagt';
+  const datoStr=d.toLocaleDateString('da-DK',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('topSub').textContent=vagtNavn+' · '+datoStr;
+  document.getElementById('vtDate').textContent=vagtNavn+' · '+datoStr;
+  document.getElementById('nyAfdChip').textContent='Afd. '+deptAfd+' – kun egne nyheder';
+  document.getElementById('setAfdNavn').textContent=deptName;
+  // Opdatér vagt-header i vagtopgaver
+  const aktuelVagt=h>=7&&h<15?'dag':h>=15&&h<23?'aften':'nat';
+  const vtHdr=document.getElementById('vtVagtHdr');
+  if(vtHdr) vtHdr.textContent=`Viser: ${vagtNavn} + fælles opgaver`;
+}
+
+function doLogout(){
+  if(!confirm('Log ud?'))return;
+  if(_pollTimer)clearInterval(_pollTimer);
+  localStorage.removeItem('pt3_session'); localStorage.removeItem('pt3_data');
+  patients=[]; vtTasks=defaultVt(); laest={}; _fbToken=null; _fbUid=null;
+  save(); location.reload();
+}
+
+async function doInAppChangePass(){
+  const oldPass=(document.getElementById('inAppOld').value||'').trim();
+  const newPass=(document.getElementById('inAppNew').value||'').trim();
+  const newPass2=(document.getElementById('inAppNew2').value||'').trim();
+  const msgEl=document.getElementById('inAppChangeMsg');
+
+  const showMsg=(m,ok=false)=>{
+    msgEl.textContent=m; msgEl.style.display='block';
+    msgEl.style.background=ok?'var(--gbg)':'var(--rbg)';
+    msgEl.style.color=ok?'var(--g)':'var(--r)';
+    msgEl.style.border=`.5px solid ${ok?'var(--gm)':'var(--rm)'}`;
+  };
+
+  if(!oldPass||!newPass||!newPass2){showMsg('Udfyld alle felter');return;}
+  if(newPass!==newPass2){showMsg('De to nye koder er ikke ens');return;}
+  if(newPass.length<8){showMsg('Ny kode skal være mindst 8 tegn');return;}
+  if(newPass===oldPass){showMsg('Ny kode må ikke være den samme');return;}
+  if(!activeBruger.uid||activeBruger.uid.startsWith('local_')||activeBruger.uid.startsWith('offline_')){
+    showMsg('Kræver Firebase-login — brug bruger-login-fanen');return;
+  }
+
+  const email=activeBruger.e||activeBruger.uid.replace('local_','').toLowerCase()+'@ouh.patienttjek.dk';
+  showMsg('Skifter...',true);
+
+  try{
+    // Re-autentificér med gammel kode
+    const loginRes=await fetch(`${FB_AUTH_URL}:signInWithPassword?key=${FB_API_KEY}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:oldPass,returnSecureToken:true})
+    });
+    const loginData=await loginRes.json();
+    if(!loginData.idToken){showMsg('Nuværende kode er forkert');return;}
+
+    // Opdatér kode
+    const changeRes=await fetch(`${FB_AUTH_URL}:update?key=${FB_API_KEY}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({idToken:loginData.idToken,password:newPass,returnSecureToken:true})
+    });
+    const changeData=await changeRes.json();
+    if(changeData.idToken){
+      _fbToken=changeData.idToken;
+      // Opdatér gemt session med ny token
+      const s=JSON.parse(localStorage.getItem('pt3_session')||'{}');
+      s.token=changeData.idToken;
+      localStorage.setItem('pt3_session',JSON.stringify(s));
+      showMsg('✓ Kode skiftet!',true);
+      ['inAppOld','inAppNew','inAppNew2'].forEach(id=>{document.getElementById(id).value='';});
+      setTimeout(()=>{msgEl.style.display='none';},3000);
+    } else {
+      showMsg('Fejl: '+(changeData.error?.message||'Prøv igen'));
+    }
+  }catch{
+    showMsg('Netværksfejl — prøv igen');
+  }
+}
+
+// ── NAVIGATION ────────────────────────────────────────────
+function goTo(page){
+  currentPage=page;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('nb-'+page).classList.add('active');
+  if(page==='vagtopgaver') renderVt();
+  if(page==='nyheder') renderNews();
+  if(page==='indstillinger') renderSettings();
+  if(page==='vagtoverlevering') renderVov();
+}
+
+// ── PATIENT STATS ─────────────────────────────────────────
+function countStats(p){
+  let d=0,a=0,pe=0,s=0,tot=0;
+  (p.tasks||[]).forEach(t=>{
+    if(t.type==='interval'){(t.doses||[]).forEach(dose=>{tot++;if(dose.done)d++;else if(dose.skipped)s++;else pe++;});}
+    else{tot++;if(t.st==='done')d++;else if(t.st==='alert')a++;else if(t.st==='pending')pe++;else s++;}
+  });
+  return{d,a,pe,s,tot};
+}
+function dotColor(p){const c=countStats(p);return c.a>0?'#E24B4A':c.pe>0?'#BA7517':'#639922';}
+function setFilter(f){activeFilter=activeFilter===f?'all':f;renderPt();}
+function clearFilter(){activeFilter='all';renderPt();}
+function taskMatchesFilter(t){
+  if(activeFilter==='all')return true;
+  if(t.type==='interval'){
+    if(activeFilter==='done')return(t.doses||[]).every(d=>d.done||d.skipped);
+    if(activeFilter==='pending')return(t.doses||[]).some(d=>!d.done&&!d.skipped);
+    return false;
+  }
+  return t.st===activeFilter;
+}
+
+// ── RENDER ALL ────────────────────────────────────────────
+function renderAll(){renderStatStrip();renderTabs();renderPt();updateBadges();}
+
+function renderStatStrip(){
+  let td=0,ta=0,tp=0;
+  patients.forEach(p=>{const c=countStats(p);td+=c.d;ta+=c.a;tp+=c.pe;});
+  document.getElementById('statStrip').innerHTML=`
+    <div class="sc" onclick="setFilter('done')"><div class="sc-val" style="color:var(--gm)">${td}</div><div class="sc-lbl">Udført</div></div>
+    <div class="sc" onclick="setFilter('alert')"><div class="sc-val" style="color:var(--rm)">${ta}</div><div class="sc-lbl">Handling</div></div>
+    <div class="sc" onclick="setFilter('pending')"><div class="sc-val" style="color:var(--am)">${tp}</div><div class="sc-lbl">Afventer</div></div>
+    <div class="sc" onclick="openModal('addPtModal')"><div class="sc-val" style="color:var(--txt)">${patients.length}</div><div class="sc-lbl">Patienter</div></div>`;
+}
+
+function renderTabs(){
+  const bar=document.getElementById('ptTabs');bar.innerHTML='';
+  patients.forEach(p=>{
+    const t=document.createElement('div');
+    t.className='ptt'+(p.id===activePt?' active':'');
+    t.innerHTML=`<div class="dot" style="background:${dotColor(p)}"></div>${p.seng}`;
+    t.onclick=()=>{activePt=p.id;activeFilter='all';renderAll();};
+    bar.appendChild(t);
+  });
+  const a=document.createElement('div');a.className='ptt-add';a.textContent='+';a.onclick=()=>openModal('addPtModal');
+  bar.appendChild(a);
+}
+
+function renderPt(){
+  const p=patients.find(p=>p.id===activePt)||(patients.length?patients[0]:null);
+  if(p&&!activePt) activePt=p.id;
+  const body=document.getElementById('ptBody');
+  if(!p){
+    body.innerHTML=`<div class="empty-state"><div class="empty-ico">🛏</div>Ingen patienter.<br>Tryk på + for at tilføje.</div>`;
+    document.getElementById('filterBanner').classList.remove('show');
+    return;
+  }
+  const c=countStats(p);const pct=c.tot>0?Math.round(c.d/c.tot*100):0;
+  const ci=2*Math.PI*17;const ai=patients.indexOf(p)%AVATARS.length;
+  const[abg,atxt]=AVATARS[ai];
+  const fb=document.getElementById('filterBanner');
+  if(activeFilter!=='all'){
+    fb.classList.add('show');
+    const fc={done:'var(--gm)',alert:'var(--rm)',pending:'var(--am)',skip:'var(--grm)'};
+    fb.style.color=fc[activeFilter]||'var(--txt2)';
+    document.getElementById('filterLbl').textContent='Viser: '+SL[activeFilter];
+  } else fb.classList.remove('show');
+
+  let html=`
+  <div class="pt-hdr">
+    <div class="pt-info" onclick="clearFilter()">
+      <div class="av" style="background:${abg};color:${atxt}">${p.ini}</div>
+      <div>
+        <div class="pt-nm">${p.seng}${p.navn?`<span style="font-size:11px;font-weight:400;color:var(--txt2)">${p.navn}</span>`:''}
+          ${activeFilter!=='all'?`<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:var(--bbg);color:var(--b);border:.5px solid var(--bm)">Vis alle</span>`:''}
+        </div>
+        <div class="pt-mt">${p.info||'Ingen diagnose'}</div>
+      </div>
+    </div>
+    <div class="prog-wrap">
+      <div style="text-align:right"><div class="prog-n">${pct}%</div><div class="prog-s">fuldført</div></div>
+      <svg width="40" height="40" viewBox="0 0 40 40">
+        <circle cx="20" cy="20" r="17" fill="none" stroke="var(--brd)" stroke-width="3.5"/>
+        <circle cx="20" cy="20" r="17" fill="none" stroke="var(--gm)" stroke-width="3.5"
+          stroke-dasharray="${ci.toFixed(1)}" stroke-dashoffset="${(ci-ci*pct/100).toFixed(1)}"
+          stroke-linecap="round" transform="rotate(-90 20 20)" style="transition:stroke-dashoffset .4s"/>
+      </svg>
+    </div>
+  </div>
+  <div class="sumbar">
+    <div class="sb" style="background:var(--gm);width:${c.tot>0?(c.d/c.tot*100).toFixed(1):0}%" onclick="setFilter('done')"></div>
+    <div class="sb" style="background:var(--rm);width:${c.tot>0?(c.a/c.tot*100).toFixed(1):0}%" onclick="setFilter('alert')"></div>
+    <div class="sb" style="background:var(--am);width:${c.tot>0?(c.pe/c.tot*100).toFixed(1):0}%" onclick="setFilter('pending')"></div>
+    <div class="sb" style="background:var(--grm);width:${c.tot>0?(c.s/c.tot*100).toFixed(1):0}%" onclick="setFilter('skip')"></div>
+  </div>
+  <div class="legend">
+    ${activeFilter!=='all'?`<div class="leg on" onclick="clearFilter()"><div class="ldot" style="background:var(--txt3)"></div>Vis alle</div>`:''}
+    <div class="leg${activeFilter==='done'?' on':''}" onclick="setFilter('done')"><div class="ldot" style="background:var(--gm)"></div>Udført</div>
+    <div class="leg${activeFilter==='alert'?' on':''}" onclick="setFilter('alert')"><div class="ldot" style="background:var(--rm)"></div>Handling</div>
+    <div class="leg${activeFilter==='pending'?' on':''}" onclick="setFilter('pending')"><div class="ldot" style="background:var(--am)"></div>Afventer</div>
+    <div class="leg${activeFilter==='skip'?' on':''}" onclick="setFilter('skip')"><div class="ldot" style="background:var(--grm)"></div>Ikke relevant</div>
+  </div>`;
+
+  const tasks=p.tasks||[];
+  const visible=tasks.filter(t=>taskMatchesFilter(t));
+  if(!visible.length){
+    html+=`<div class="empty-state" style="padding:20px 0"><div class="empty-ico">📋</div>${tasks.length?'Ingen opgaver matcher filteret':'Ingen opgaver endnu'}</div>`;
+  } else {
+    tasks.forEach((t,ti)=>{if(!taskMatchesFilter(t))return;html+=renderTask(p.id,t,ti);});
+  }
+
+  html+=`
+  <div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap">
+    <button class="btn-sm btn-primary" onclick="openAddTaskModal('${p.id}')" style="flex:1">+ Tilføj opgave</button>
+    <button class="btn-sm" onclick="openEditPt('${p.id}')">✎ Rediger</button>
+    <button class="btn-sm btn-danger" onclick="removePt('${p.id}')">🗑 Slet</button>
+  </div>`;
+
+  body.innerHTML=html;
+}
+
+function renderTask(pid,t,ti){
+  if(t.type==='interval'){
+    const tot=(t.doses||[]).length,don=(t.doses||[]).filter(d=>d.done).length,ski=(t.doses||[]).filter(d=>d.skipped).length;
+    const pctI=tot>0?Math.round(don/tot*100):0;const allD=don+ski===tot;
+    const hbg=allD?'background:var(--gbg)':don>0?'background:var(--abg)':'background:var(--s2)';
+    let html=`<div class="itask"><div class="ith" style="${hbg}" onclick="toggleExp('${pid}','${t.id}')">
+      <span style="font-size:14px">${t.icon||'📋'}</span>
+      <div style="flex:1"><div class="ititle">${t.txt}</div>${t.note?`<div class="imeta">${t.note}</div>`:''}</div>
+      <span class="ibadge">${don}/${tot}</span>
+      ${t.freq?`<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:var(--bbg);color:var(--b);border:.5px solid var(--bm);margin-left:4px">${t.freq}</span>`:''}
+    </div>`;
+    if(t.expanded){
+      html+=`<div>`;
+      (t.doses||[]).forEach((d,di)=>{
+        const cls=d.done?'ok':d.skipped?'sk':'';const ck=d.done?'✓':d.skipped?'—':'';
+        const dp=d.done?'dp-ok':d.skipped?'dp-sk':'dp-p';const dt=d.done?'Givet':d.skipped?'Sprunget':'Afventer';
+        html+=`<div class="dose-row" onclick="toggleDose('${pid}','${t.id}','${d.id}')">
+          <div class="dchk ${cls}">${ck}</div><span class="dlbl">${d.label}</span>
+          <span class="dtime">${d.time}</span><span class="dpill ${dp}">${dt}</span></div>`;
+      });
+      (t.subs||[]).forEach((sub,xi)=>{html+=renderSubRow(pid,t.id,sub,xi);});
+      html+=`<div class="sub-add">
+        <input placeholder="Underopgave…" id="isub-${t.id}" onkeydown="if(event.key==='Enter')addSubSimple('${pid}','${t.id}')">
+        <button class="sub-add-btn" onclick="addSubSimple('${pid}','${t.id}')">+</button>
+        <button class="sub-adv-btn" onclick="openAddSubModal('${pid}','${t.id}')">+ Avanceret</button>
+      </div></div>`;
+    }
+    html+=`<div class="ibar-row"><div class="ibar"><div class="ibar-fill" style="width:${pctI}%"></div></div>
+      <span style="font-size:10px;color:var(--txt3);min-width:28px;text-align:right">${pctI}%</span>
+      <div class="itask-actions">
+        <button class="ta-btn" onclick="openEditTaskModal('${pid}','${t.id}')">✎</button>
+        <button class="ta-btn ta-del" onclick="removeTask('${pid}','${t.id}')">✕</button>
+      </div>
+    </div></div>`;
+    return html;
+  }
+  // Simple task
+  let html=`<div class="task"><div class="task-main" onclick="toggleExp('${pid}','${t.id}')">
+    <div class="stripe ${SS[t.st]||'s-p'}"></div>
+    <div class="tb">
+      <span class="tico">${t.icon||'📌'}</span>
+      <span class="ttxt">${t.txt}${t.freq?`<span class="task-freq">${t.freq}</span>`:''}</span>
+      ${t.time?`<span class="ttime">${t.time}</span>`:''}
+      ${t.dueDate?`<span class="ttime" style="color:var(--b)">📅${t.dueDate}</span>`:''}
+      ${t.importance==='haster'?`<span class="task-imp-h">Haster</span>`:''}
+      ${t.importance==='vigtigt'?`<span class="task-imp-v">Vigtigt</span>`:''}
+      <span class="badge ${SB[t.st]||'bp'}" onclick="event.stopPropagation();cycleStatus('${pid}','${t.id}')">${SL[t.st]||'Afventer'}</span>
+    </div>
+    <div class="task-actions">
+      <button class="ta-btn" onclick="event.stopPropagation();openEditTaskModal('${pid}','${t.id}')">✎</button>
+      <button class="ta-btn ta-del" onclick="event.stopPropagation();removeTask('${pid}','${t.id}')">✕</button>
+    </div>
+  </div>`;
+  if(t.note) html+=`<div class="task-note">↳ ${t.note}</div>`;
+  if(t.expanded){
+    html+=`<div class="subs">`;
+    (t.subs||[]).forEach((sub,xi)=>{html+=renderSubRow(pid,t.id,sub,xi);});
+    html+=`<div class="sub-add">
+      <input placeholder="Underopgave…" id="sub-${t.id}" onkeydown="if(event.key==='Enter')addSubSimple('${pid}','${t.id}')">
+      <button class="sub-add-btn" onclick="addSubSimple('${pid}','${t.id}')">+</button>
+      <button class="sub-adv-btn" onclick="openAddSubModal('${pid}','${t.id}')">+ Avanceret</button>
+    </div></div>`;
+  }
+  html+=`</div>`;return html;
+}
+
+function renderSubRow(pid,tid,sub,xi){
+  const sc=sub.st==='done'?'d':sub.st==='alert'?'a':sub.st==='skip'?'s':'';
+  const ck=sub.st==='done'?'✓':sub.st==='alert'?'!':sub.st==='skip'?'—':'';
+  const imp=sub.importance&&sub.importance!=='normal'?`<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:${sub.importance==='haster'?'var(--rbg)':'var(--abg)'};color:${sub.importance==='haster'?'var(--r)':'var(--a)'};border:.5px solid ${sub.importance==='haster'?'var(--rm)':'var(--am)'}">${IMP[sub.importance]}</span>`:'';
+  const due=sub.dueDate?`<span style="font-size:9px;color:var(--b)">📅${sub.dueDate}${sub.dueTime?' '+sub.dueTime:''}</span>`:'';
+  return`<div class="sub-row" onclick="cycleSubStatus('${pid}','${tid}','${sub.id}')">
+    <div class="sub-chk ${sc}">${ck}</div>
+    <div class="sub-body">
+      <div class="sub-txt" style="${sub.st==='done'?'text-decoration:line-through;color:var(--txt3)':''}">${sub.txt}</div>
+      ${sub.note?`<div class="sub-meta">↳ ${sub.note}</div>`:''}
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;flex-shrink:0">${imp}${due}</div>
+    <span class="badge ${SB[sub.st]||'bp'}" style="font-size:9px" onclick="event.stopPropagation();cycleSubStatus('${pid}','${tid}','${sub.id}')">${SL[sub.st]||'Afventer'}</span>
+  </div>`;
+}
+
+// ── PATIENT ACTIONS ───────────────────────────────────────
+function addPt(){
+  const seng=(document.getElementById('newSeng').value||'').trim();
+  const navn=(document.getElementById('newNavn').value||'').trim();
+  if(!seng&&!navn){showToast('Angiv seng eller navn');return;}
+  const base=(navn||seng).replace(/[^A-ZÆØÅa-zæøå ]/g,'').trim();
+  const ini=base.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'??';
+  const id=uid();
+  patients.push({id,seng:seng||navn,navn,ini,info:(document.getElementById('newDiag').value||'').trim(),tasks:[]});
+  activePt=id; save(); renderAll(); closeModal('addPtModal'); showToast((seng||navn)+' tilføjet');
+  ['newSeng','newNavn','newDiag'].forEach(i=>{document.getElementById(i).value='';});
+}
+function openEditPt(pid){
+  const p=patients.find(p=>p.id===pid);if(!p)return;
+  document.getElementById('editPtId').value=pid;
+  document.getElementById('editSeng').value=p.seng||'';
+  document.getElementById('editNavn').value=p.navn||'';
+  document.getElementById('editDiag').value=p.info||'';
+  openModal('editPtModal');
+}
+function saveEditPt(){
+  const pid=document.getElementById('editPtId').value;
+  const p=patients.find(p=>p.id===pid);if(!p)return;
+  p.seng=document.getElementById('editSeng').value.trim()||p.seng;
+  p.navn=document.getElementById('editNavn').value.trim();
+  p.info=document.getElementById('editDiag').value.trim();
+  const base=(p.navn||p.seng).replace(/[^A-ZÆØÅa-zæøå ]/g,'').trim();
+  p.ini=base.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'??';
+  save(); renderAll(); closeModal('editPtModal'); showToast('Patient opdateret');
+}
+function removePt(pid){
+  if(!confirm('Slet patient?'))return;
+  patients=patients.filter(p=>p.id!==pid);
+  if(activePt===pid)activePt=patients.length?patients[0].id:null;
+  save(); renderAll(); showToast('Patient slettet');
+}
+
+// ── TASK ACTIONS ──────────────────────────────────────────
+function cycleStatus(pid,tid){
+  const p=patients.find(p=>p.id===pid);if(!p)return;
+  const t=(p.tasks||[]).find(t=>t.id===tid);if(!t)return;
+  t.st=CYCLE[(CYCLE.indexOf(t.st||'pending')+1)%CYCLE.length];
+  save(); renderAll(); showToast(SL[t.st]+': '+t.txt);
+}
+function cycleSubStatus(pid,tid,sid){
+  const p=patients.find(p=>p.id===pid);if(!p)return;
+  const t=(p.tasks||[]).find(t=>t.id===tid);if(!t)return;
+  const sub=(t.subs||[]).find(s=>s.id===sid);if(!sub)return;
+  sub.st=CYCLE[(CYCLE.indexOf(sub.st||'pending')+1)%CYCLE.length];
+  save(); renderPt();
+}
+function toggleExp(pid,tid){
+  const p=patients.find(p=>p.id===pid);if(!p)return;
+  const t=(p.tasks||[]).find(t=>t.id===tid);if(!t)return;
+  t.expanded=!t.expanded; renderPt();
+}
+function toggleDose(pid,tid,did){
+  const p=patients.find(p=>p.id===pid);if(!p)return;
+  const t=(p.tasks||[]).find(t=>t.id===tid);if(!t)return;
+  const d=(t.doses||[]).find(d=>d.id===did);if(!d)return;
+  if(!d.done&&!d.skipped)d.done=true;
+  else if(d.done){d.done=false;d.skipped=true;}
+  else d.skipped=false;
+  save(); renderAll();
+}
+function addSubSimple(pid,tid){
+  const inp=document.getElementById(`sub-${tid}`)||document.getElementById(`isub-${tid}`);
+  const val=inp?inp.value.trim():'';if(!val)return;
+  const p=patients.find(p=>p.id===pid);if(!p)return;
+  const t=(p.tasks||[]).find(t=>t.id===tid);if(!t)return;
+  if(!t.subs)t.subs=[];
+  t.subs.push({id:uid(),txt:val,st:'pending',note:'',importance:'normal',dueDate:'',dueTime:''});
+  inp.value=''; save(); renderPt(); showToast('Underopgave tilføjet');
+}
+function removeTask(pid,tid){
+  const p=patients.find(p=>p.id===pid);if(!p)return;
+  p.tasks=(p.tasks||[]).filter(t=>t.id!==tid);
+  save(); renderAll(); showToast('Opgave slettet');
+}
+
+// ── ADD TASK MODAL ────────────────────────────────────────
+function openAddTaskModal(pid){
+  editingTaskId=null; selTplId=null; selFreqVal='Dagligt'; selFreq2Val='Én gang'; selImpVal='normal'; custSubs=[];
+  document.getElementById('taskPid').value=pid||activePt;
+  document.getElementById('taskEditId').value='';
+  document.getElementById('taskModalTitle').innerHTML='Tilføj opgave <span class="mclose" onclick="closeModal(\'addTaskModal\')">×</span>';
+  document.getElementById('custTxt').value='';document.getElementById('custNote').value='';
+  document.getElementById('custTime').value='08:00';document.getElementById('custDate').value='';
+  document.getElementById('custSubList').innerHTML='';
+  renderTplGrid(); resetFreqChips(); resetImpBtns();
+  switchTaskTab('skabelon');
+  openModal('addTaskModal');
+}
+function openEditTaskModal(pid,tid){
+  const p=patients.find(p=>p.id===pid);if(!p)return;
+  const t=(p.tasks||[]).find(t=>t.id===tid);if(!t)return;
+  editingTaskId=tid; selTplId=null;
+  document.getElementById('taskPid').value=pid;
+  document.getElementById('taskEditId').value=tid;
+  document.getElementById('taskModalTitle').innerHTML='Rediger opgave <span class="mclose" onclick="closeModal(\'addTaskModal\')">×</span>';
+  document.getElementById('custTxt').value=t.txt||'';
+  document.getElementById('custNote').value=t.note||'';
+  document.getElementById('custTime').value=t.time||'08:00';
+  document.getElementById('custDate').value=t.dueDate||'';
+  selFreq2Val=t.freq||'Én gang'; selImpVal=t.importance||'normal'; custSubs=[];
+  renderTplGrid(); resetFreqChips2(selFreq2Val); resetImpBtns(selImpVal);
+  document.getElementById('custSubList').innerHTML='';
+  switchTaskTab('custom');
+  openModal('addTaskModal');
+}
+
+function renderTplGrid(){
+  document.getElementById('tplGrid').innerHTML=TEMPLATES.map(t=>`
+    <div class="tpl${selTplId===t.id?' sel':''}" onclick="pickTpl('${t.id}')">
+      <div class="tpl-icon">${t.icon}</div>
+      <div class="tpl-name">${t.name}</div>
+      <div class="tpl-desc">${t.desc}</div>
+    </div>`).join('');
+}
+function pickTpl(id){
+  selTplId=id;
+  const tpl=TEMPLATES.find(t=>t.id===id);
+  const ex=document.getElementById('tplExtra');
+  ex.innerHTML=tpl.extra||''; ex.style.display=tpl.extra?'block':'none';
+  renderTplGrid();
+}
+function switchTaskTab(tab){
+  document.getElementById('taskTab-skabelon').style.display=tab==='skabelon'?'block':'none';
+  document.getElementById('taskTab-custom').style.display=tab==='custom'?'block':'none';
+  document.getElementById('mtab-skabelon').classList.toggle('active',tab==='skabelon');
+  document.getElementById('mtab-custom').classList.toggle('active',tab==='custom');
+}
+function selFreq(el,v){selFreqVal=v;document.querySelectorAll('#tplFreqChips .fchip').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');}
+function selFreq2(el,v){selFreq2Val=v;document.querySelectorAll('#custFreqChips .fchip').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');}
+function selImp(el,v){selImpVal=v;document.querySelectorAll('.imp-btn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
+function resetFreqChips(){document.querySelectorAll('#tplFreqChips .fchip').forEach((c,i)=>{c.classList.toggle('sel',i===1);});}
+function resetFreqChips2(val){document.querySelectorAll('#custFreqChips .fchip').forEach(c=>{c.classList.toggle('sel',c.textContent===val);});}
+function resetImpBtns(v='normal'){document.querySelectorAll('.imp-btn').forEach(b=>{b.classList.toggle('sel',b.textContent.toLowerCase()===v);});}
+function addCustSub(){
+  const inp=document.getElementById('custSubInp');const val=inp.value.trim();if(!val)return;
+  custSubs.push({id:uid(),txt:val,st:'pending',note:'',importance:'normal',dueDate:'',dueTime:''});
+  inp.value='';
+  document.getElementById('custSubList').innerHTML=custSubs.map((s,i)=>`
+    <div class="sub-preview-row"><div class="dot"></div><span style="flex:1">${s.txt}</span>
+    <span onclick="custSubs.splice(${i},1);document.getElementById('custSubList').innerHTML=custSubs.map((s2,j)=>'<div class=sub-preview-row><div class=dot></div><span style=flex:1>'+s2.txt+'</span></div>').join('')" style="cursor:pointer;color:var(--txt3);font-size:14px">×</span></div>`).join('');
+}
+
+function saveTask(){
+  const pid=document.getElementById('taskPid').value;
+  const p=patients.find(p=>p.id===pid);if(!p)return;
+  const isSkabelon=document.getElementById('taskTab-skabelon').style.display!=='none';
+  const editId=document.getElementById('taskEditId').value;
+
+  let newTask;
+  if(isSkabelon){
+    if(!selTplId){showToast('Vælg en skabelon');return;}
+    const tpl=TEMPLATES.find(t=>t.id===selTplId);
+    const freq=selFreqVal; const time=document.getElementById('tplTime').value;
+    const imp=document.getElementById('tplImp').value;
+    const genDosesLocal=(n,start,lbl)=>{
+      const[h,m]=(start||'08:00').split(':').map(Number);const sm=h*60+m,vm=480;
+      return Array.from({length:n},(_,i)=>{const mins=n===1?sm:sm+Math.round(vm/(n-1)*i);const hh=Math.floor(mins/60)%24,mm=mins%60;return{id:uid(),label:`${lbl} ${i+1}`,time:`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`,done:false,skipped:false};});
+    };
+    const isInterval=['2× dagligt','3× dagligt','Hver 4. time','Hver vagt'].includes(freq);
+    const countMap={'2× dagligt':2,'3× dagligt':3,'Hver 4. time':6,'Hver vagt':2};
+    const lbl=selTplId==='medicin'||selTplId==='blod'?'Dosis':'Måling';
+    if(isInterval){
+      newTask={id:uid(),type:'interval',icon:tpl.icon,txt:tpl.name,note:'',freq,importance:imp,doses:genDosesLocal(countMap[freq]||2,time,lbl),subs:[],expanded:false};
+    } else {
+      newTask={id:uid(),type:'simple',icon:tpl.icon,txt:tpl.name,note:'',time,freq:freq==='Én gang'?'':freq,st:'pending',importance:imp,subs:[],expanded:false,dueDate:'',dueTime:''};
+    }
+  } else {
+    const txt=document.getElementById('custTxt').value.trim();if(!txt){showToast('Skriv en titel');return;}
+    const autoIcons={morgen:'💧',medicin:'💊',obs:'🔍',ernæring:'🍽',mobil:'🚶',blod:'🩸',fvc:'🫁',lejr:'🛏',samtale:'😊',toks:'❤️'};
+    const autoIcon=Object.entries(autoIcons).find(([k])=>txt.toLowerCase().includes(k))?.[1]||'📌';
+    newTask={id:uid(),type:'simple',icon:autoIcon,txt,note:document.getElementById('custNote').value.trim(),time:document.getElementById('custTime').value,freq:selFreq2Val==='Én gang'?'':selFreq2Val,st:'pending',importance:selImpVal,subs:deepClone(custSubs),expanded:false,dueDate:document.getElementById('custDate').value,dueTime:''};
+  }
+
+  if(!p.tasks)p.tasks=[];
+  if(editId){
+    const idx=p.tasks.findIndex(t=>t.id===editId);
+    if(idx>=0){newTask.id=editId;newTask.subs=p.tasks[idx].subs||newTask.subs;newTask.expanded=p.tasks[idx].expanded;p.tasks[idx]=newTask;}
+  } else {
+    p.tasks.push(newTask);
+  }
+  save(); renderAll(); closeModal('addTaskModal'); showToast(editId?'Opgave opdateret':'Opgave tilføjet');
+}
+
+// ── ADD SUB MODAL ─────────────────────────────────────────
+let subImpVal='normal';
+function openAddSubModal(pid,tid){
+  document.getElementById('subPid').value=pid;document.getElementById('subTid').value=tid;
+  document.getElementById('subTxt').value='';document.getElementById('subNote').value='';
+  document.getElementById('subDate').value='';document.getElementById('subTime').value='';
+  subImpVal='normal'; selSubImp('normal');
+  openModal('addSubModal');
+}
+function selSubImp(v){
+  subImpVal=v;
+  ['normal','vigtigt','haster'].forEach(k=>{
+    const el=document.getElementById('simp-'+k);
+    if(el)el.classList.toggle('sel',k===v);
+  });
+}
+function saveSub(){
+  const pid=document.getElementById('subPid').value,tid=document.getElementById('subTid').value;
+  const txt=document.getElementById('subTxt').value.trim();if(!txt){showToast('Skriv en titel');return;}
+  const p=patients.find(p=>p.id===pid);if(!p)return;
+  const t=(p.tasks||[]).find(t=>t.id===tid);if(!t)return;
+  if(!t.subs)t.subs=[];
+  t.subs.push({id:uid(),txt,note:document.getElementById('subNote').value.trim(),st:'pending',importance:subImpVal,dueDate:document.getElementById('subDate').value,dueTime:document.getElementById('subTime').value});
+  t.expanded=true; save(); renderPt(); closeModal('addSubModal'); showToast('Underopgave tilføjet');
+}
+
+// ── VAGTOPGAVER ───────────────────────────────────────────
+let activeVagtFilter=(()=>{const h=new Date().getHours();return h>=7&&h<15?'dag':h>=15&&h<23?'aften':'nat';})();
+
+function setVagtFilter(f){
+  activeVagtFilter=f;
+  const labels={dag:'Dag-vagt',aften:'Aften-vagt',nat:'Nat-vagt',alle:'Alle vagter'};
+  const hdr=document.getElementById('vtVagtHdr');
+  if(hdr)hdr.textContent=`Viser: ${labels[f]}${f!=='alle'?' + fælles opgaver':''}`;
+  ['dag','aften','nat','alle'].forEach(k=>{
+    const btn=document.getElementById('vtf-'+k);if(!btn)return;
+    const isActive=k===f;
+    const colors={dag:{bg:'var(--abg)',col:'var(--a)',brd:'var(--am)'},aften:{bg:'var(--bbg)',col:'var(--b)',brd:'var(--bm)'},nat:{bg:'var(--pbg)',col:'var(--pu)',brd:'var(--pum)'},alle:{bg:'var(--gbg)',col:'var(--g)',brd:'var(--gm)'}};
+    btn.style.background=isActive?colors[k].bg:'var(--s2)';
+    btn.style.color=isActive?colors[k].col:'var(--txt2)';
+    btn.style.borderColor=isActive?colors[k].brd:'var(--brd2)';
+  });
+  renderVt();
+}
+
+function renderVt(){
+  const f=activeVagtFilter;
+  const filtered=vtTasks.filter(t=>{
+    if(!t.vagt||t.vagt==='alle')return true;
+    if(f==='alle')return true;
+    return t.vagt===f;
+  });
+  const done=filtered.filter(t=>t.done).length,tot=filtered.length;
+  const pct=tot>0?Math.round(done/tot*100):0;
+  document.getElementById('vtFill').style.width=pct+'%';
+  document.getElementById('vtPct').textContent=pct+'%';
+  const rem=vtTasks.filter(t=>!t.done).length;
+  const b=document.getElementById('vtBadge');
+  b.textContent=rem;b.classList.toggle('show',rem>0);
+
+  // Sektioner med farve-header: Adm. = blå, Patientpleje = grøn, Fælles = grå
+  const secs=[...new Set(filtered.map(t=>t.sec))];
+  const secColor=sec=>{
+    if(sec.includes('Adm'))return{bg:'#E6F1FB',col:'#0C447C',brd:'#378ADD'};
+    if(sec.includes('Patientpleje'))return{bg:'#EAF3DE',col:'#27500A',brd:'#639922'};
+    if(sec.includes('Ekstra'))return{bg:'#EEEDFE',col:'#3C3489',brd:'#7F77DD'};
+    return{bg:'var(--s2)',col:'var(--txt3)',brd:'var(--brd)'};
+  };
+
+  let html='';
+  secs.forEach(sec=>{
+    const items=filtered.filter(t=>t.sec===sec),sd=items.filter(t=>t.done).length;
+    const c=secColor(sec);
+    html+=`<div class="vt-sec" style="background:${c.bg};color:${c.col};border-color:${c.brd}">${sec}<span style="color:${c.col}">${sd}/${items.length}</span></div>`;
+    items.forEach(t=>{
+      html+=`<div class="vt-item${t.done?' dn':''}" onclick="toggleVt('${t.id}')">
+        <div class="vtchk${t.done?' dn':''}">${t.done?'✓':''}</div>
+        <div style="flex:1"><div class="vti-txt">${t.txt}</div>${t.sub?`<div class="vti-sub">${t.sub}</div>`:''}</div>
+        ${t.time?`<div class="vti-time">${t.time}</div>`:''}
+      </div>`;
+    });
+  });
+  if(!secs.length)html='<div class="empty-state" style="padding:20px 0"><div class="empty-ico">✅</div>Ingen opgaver for denne vagt</div>';
+  document.getElementById('vtList').innerHTML=html;
+}
+function toggleVt(id){const t=vtTasks.find(t=>t.id===id);if(!t)return;t.done=!t.done;save();renderVt();showToast((t.done?'✓ ':'↺ ')+t.txt);}
+function nulstilVt(){
+  if(!confirm('Nulstil alle synlige vagtopgaver?'))return;
+  const f=activeVagtFilter;
+  vtTasks.filter(t=>!t.vagt||t.vagt==='alle'||f==='alle'||t.vagt===f).forEach(t=>t.done=false);
+  save();renderVt();
+}
+function addVt(){
+  const inp=document.getElementById('vtInput');if(!inp||!inp.value.trim())return;
+  const f=activeVagtFilter==='alle'?'dag':activeVagtFilter;
+  const secMap={dag:'Dag · Patientpleje',aften:'Aften · Patientpleje',nat:'Nat · Patientpleje'};
+  vtTasks.push({id:uid(),txt:inp.value.trim(),sub:'',time:'',done:false,sec:secMap[f]||'Dag · Patientpleje',vagt:f});
+  inp.value='';save();renderVt();showToast('Vagtopgave tilføjet');
+}
+
+// ── NYHEDER ───────────────────────────────────────────────
+function erLaest(id){return !!(laest[activeBruger.uid]&&laest[activeBruger.uid][id]);}
+function markerLaest(id){if(!laest[activeBruger.uid])laest[activeBruger.uid]={};laest[activeBruger.uid][id]=true;save();updateBadges();renderNews();}
+function renderNews(){
+  const q=(document.getElementById('nySearch')?.value||'').trim().toLowerCase();
+  const filtered=newsItems.filter(n=>{
+    if(n.afd!==deptAfd)return false;
+    if(q){const tx=(n.titel+n.uge+(n.slides||[]).map(s=>s.t+s.tx).join(' ')).toLowerCase();return tx.includes(q);}
+    return true;
+  }).sort((a,b)=>b.dato-a.dato);
+  const hl=t=>q?t.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>'):t;
+  const list=document.getElementById('nyList');
+  if(!filtered.length){
+    list.innerHTML=`<div class="empty-state" style="padding:40px 15px"><div class="empty-ico">📭</div>${q?`Ingen resultater for "${q}"`:'Ingen nyhedsbreve for din afdeling'}</div><div class="ny-upload" onclick="openModal('nyhedModal')">📎 Tilføj nyhedsbrev</div>`;
+    return;
+  }
+  const yrs=[...new Set(filtered.map(n=>new Date(n.dato).getFullYear()))];
+  let html='';
+  yrs.forEach(yr=>{
+    html+=`<div class="ny-yr">${yr}</div>`;
+    filtered.filter(n=>new Date(n.dato).getFullYear()===yr).forEach(n=>{
+      const l=erLaest(n.id),d=new Date(n.dato).toLocaleDateString('da-DK',{day:'numeric',month:'long'});
+      html+=`<div class="ny-card${n.exp?' open':''}${!l?' ulaest':''}">
+        <div class="ny-hdr" onclick="toggleNy('${n.id}')">
+          <div class="ny-udot" style="opacity:${!l?1:0}"></div>
+          <div class="ny-meta"><div class="ny-title">${hl(n.titel)}</div>
+          <div class="ny-sub">${hl(n.uge)} <span class="ny-pill ${l?'l':'u'}">${l?'Læst':'Ulæst'}</span></div></div>
+          <div class="ny-date">${d}</div>
+        </div>
+        <div class="ny-body">`;
+      (n.slides||[]).forEach(s=>{html+=`<div class="ny-stitle">${hl(s.t)}</div><div class="ny-stxt">${hl(s.tx)}</div>`;});
+      if(activeBruger.rolle==='leder'){html+=`<div style="display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:.5px solid var(--brd)"><button onclick="sletNyhed('${n.id}')" style="font-size:10px;padding:3px 7px;border-radius:5px;border:.5px solid var(--rm);background:var(--rbg);cursor:pointer;color:var(--r);font-family:inherit">Slet</button></div>`;}
+      html+=`</div></div>`;
+    });
+  });
+  html+=`<div class="ny-upload" onclick="openModal('nyhedModal')">📎 Tilføj nyhedsbrev</div>`;
+  list.innerHTML=html;
+  updateBadges();
+}
+function toggleNy(id){const n=newsItems.find(n=>n.id===id);if(!n)return;n.exp=!n.exp;if(n.exp&&!erLaest(id))markerLaest(id);else renderNews();}
+function gemNyhed(){
+  const titel=document.getElementById('nyTitel').value.trim()||'Nyhedsbrev';
+  const uge=document.getElementById('nyUge').value.trim();
+  const tekst=document.getElementById('nyTekst').value.trim();if(!tekst){showToast('Indsæt indhold');return;}
+  newsItems.push({id:uid(),afd:deptAfd,titel,uge,dato:Date.now(),exp:false,slides:[{t:'Indhold',tx:tekst}]});
+  closeModal('nyhedModal');['nyTitel','nyUge','nyTekst'].forEach(i=>{document.getElementById(i).value='';});
+  updateBadges();renderNews();showToast('Nyhedsbrev tilføjet');
+}
+function sletNyhed(id){if(!confirm('Slet nyhedsbrev?'))return;newsItems=newsItems.filter(n=>n.id!==id);renderNews();updateBadges();showToast('Slettet');}
+
+// ── VAGTOVERLEVERING ──────────────────────────────────────
+function renderVov(){
+  document.getElementById('vovDato').textContent=deptName+' · '+new Date().toLocaleDateString('da-DK',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const note=document.getElementById('vovNote');if(note)note.value=vagtNote;
+  let html='';
+  if(!patients.length){html='<div class="empty-state"><div class="empty-ico">🛏</div>Ingen patienter</div>';}
+  else{
+    patients.forEach((p,i)=>{
+      const c=countStats(p);const ai=i%AVATARS.length;const[abg,atxt]=AVATARS[ai];
+      const alerts=(p.tasks||[]).filter(t=>t.type!=='interval'&&t.st==='alert');
+      const pending=(p.tasks||[]).filter(t=>t.type!=='interval'&&t.st==='pending');
+      const itvPend=(p.tasks||[]).filter(t=>t.type==='interval'&&(t.doses||[]).some(d=>!d.done&&!d.skipped));
+      html+=`<div class="vov-card">
+        <div class="vov-pt-hdr">
+          <div class="vov-av" style="background:${abg};color:${atxt}">${p.ini}</div>
+          <div><div class="vov-pt-name">${p.seng}${p.navn?' — '+p.navn:''}</div>
+          <div class="vov-pt-meta">${p.info||'Ingen diagnose'} · ${c.d}/${c.tot} udført</div></div>
+        </div>`;
+      if(alerts.length) html+=`<div class="vov-item"><div class="vov-dot" style="background:var(--rm)"></div><div class="vov-txt"><b>Handling krævet:</b> ${alerts.map(t=>t.txt+(t.note?' ('+t.note+')':'')).join(' · ')}</div></div>`;
+      if(pending.length) html+=`<div class="vov-item"><div class="vov-dot" style="background:var(--am)"></div><div class="vov-txt"><b>Afventer:</b> ${pending.map(t=>t.txt).join(' · ')}</div></div>`;
+      if(itvPend.length) html+=`<div class="vov-item"><div class="vov-dot" style="background:var(--bm)"></div><div class="vov-txt"><b>Interval resterende:</b> ${itvPend.map(t=>{const rem=(t.doses||[]).filter(d=>!d.done&&!d.skipped).length;return`${t.txt} (${rem} tilbage)`;}).join(' · ')}</div></div>`;
+      if(!alerts.length&&!pending.length&&!itvPend.length) html+=`<div class="vov-item"><div class="vov-dot" style="background:var(--gm)"></div><div class="vov-txt" style="color:var(--g)">Alle opgaver udført ✓</div></div>`;
+      html+=`</div>`;
+    });
+  }
+  document.getElementById('vovContent').innerHTML=html;
+}
+
+// ── INDSTILLINGER ─────────────────────────────────────────
+function renderSettings(){
+  document.getElementById('setAfdNavn').textContent=deptName;
+  const isLeder=activeBruger.rolle==='leder';
+  document.getElementById('adminSec').style.display=isLeder?'block':'none';
+  if(isLeder){
+    const mine=newsItems.filter(n=>n.afd===deptAfd);
+    document.getElementById('adminNyListe').innerHTML=mine.length?mine.map(n=>`
+      <div style="display:flex;align-items:center;gap:7px;padding:6px 8px;border:.5px solid var(--brd);border-radius:var(--radius);margin-bottom:4px;background:var(--s1)">
+        <div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--txt)">${n.uge}</div>
+        <div style="font-size:10px;color:var(--txt3)">${new Date(n.dato).toLocaleDateString('da-DK',{day:'numeric',month:'long',year:'numeric'})}</div></div>
+        <button onclick="sletNyhed('${n.id}')" style="font-size:10px;padding:3px 7px;border-radius:5px;border:.5px solid var(--rm);background:var(--rbg);cursor:pointer;color:var(--r);font-family:inherit">Slet</button>
+      </div>`).join(''):'<div style="font-size:12px;color:var(--txt3)">Ingen nyhedsbreve endnu</div>';
+  }
+  const kontoEl=document.getElementById('kontoInfo');
+  kontoEl.innerHTML=`<div style="width:32px;height:32px;border-radius:50%;background:var(--gbg);color:var(--g);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">${activeBruger.i}</div>
+    <div><div style="font-size:13px;font-weight:600;color:var(--txt)">${activeBruger.n}</div><div style="font-size:11px;color:var(--txt2)">${activeBruger.e||''} · ${activeBruger.rolle}</div></div>`;
+  document.getElementById('brugerListe').innerHTML=DEMO_BRUGERE.map(b=>`
+    <div class="bruger-row${b.uid===activeBruger.uid?' aktiv':''}" onclick="skiftBruger('${b.uid}')">
+      <div class="b-av">${b.i}</div>
+      <div><div style="font-size:12px;font-weight:600;color:var(--txt)">${b.n}</div><div style="font-size:11px;color:var(--txt2)">${b.rolle}</div></div>
+    </div>`).join('');
+}
+function skiftBruger(uid){activeBruger=DEMO_BRUGERE.find(b=>b.uid===uid)||activeBruger;renderSettings();showToast('Logget ind som '+activeBruger.n);}
+
+// ── BADGES + THEME ────────────────────────────────────────
+function updateBadges(){
+  const rem=vtTasks.filter(t=>!t.done).length;const vb=document.getElementById('vtBadge');if(vb){vb.textContent=rem;vb.classList.toggle('show',rem>0);}
+  const ul=newsItems.filter(n=>n.afd===deptAfd&&!erLaest(n.id)).length;const nb=document.getElementById('nyBadge');if(nb){nb.textContent=ul;nb.classList.toggle('show',ul>0);}
+}
+function toggleDark(){
+  dark=!dark;document.body.classList.toggle('dark',dark);
+  document.getElementById('themeBtn').textContent=dark?'☀️':'🌙';
+  const dt=document.getElementById('darkTog');if(dt){dt.classList.toggle('on',dark);dt.classList.toggle('off',!dark);}
+  localStorage.setItem('pt3_theme',dark?'dark':'light');
+}
+
+// ── MODALS ────────────────────────────────────────────────
+function openModal(id){document.getElementById(id)?.classList.add('open');}
+function closeModal(id){document.getElementById(id)?.classList.remove('open');}
+function showToast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(t._to);t._to=setTimeout(()=>t.classList.remove('show'),2200);}
+
+// ── INIT ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  if(localStorage.getItem('pt3_theme')==='dark'){dark=true;document.body.classList.add('dark');document.getElementById('themeBtn').textContent='☀️';const dt=document.getElementById('darkTog');if(dt){dt.classList.add('on');dt.classList.remove('off');}}
+
+  newsItems=[
+    {id:'ny1',afd:'N',titel:'N Sengeafsnit Nyhedsbrev',uge:'Uge 17 – 2026',dato:new Date(2026,3,25).getTime(),exp:false,
+     slides:[{t:'Nyt i afsnittet',tx:'Sondepumpe-hastighed: Der må ikke justeres hurtigere end 400 ml/t — vi risikerer at belaste mave og tarm.'},{t:'Vagtplan',tx:'Giv besked om weekendmulighed inden d. 8/5. Ugerne 24–35 planlægges nu.'},{t:'Nyt i personalegruppen',tx:'Monica (ssa) sygemeldt. Maja (spl) starter op igen d. 5/5.'}]},
+    {id:'ny2',afd:'N',titel:'N Sengeafsnit Nyhedsbrev',uge:'Uge 14 – 2026',dato:new Date(2026,3,4).getTime(),exp:false,
+     slides:[{t:'Nyt udstyr',tx:'To nye trykaflastningsmadrasser til senge 3 og 8. Dokumentér i EPJ.'},{t:'Kursus om apopleksi',tx:'Obligatorisk kursus d. 22/4 kl. 08–12. Tilmeld via intranet.'}]},
+    {id:'ny3',afd:'U',titel:'Urologisk Afd. Nyhedsbrev',uge:'Uge 16 – 2026',dato:new Date(2026,3,18).getTime(),exp:false,
+     slides:[{t:'Nyt fra Afd. U',tx:'Nyt kateter-protokol implementeret fra uge 16.'}]},
+  ];
+
+  const session=JSON.parse(localStorage.getItem('pt3_session')||'null');
+  if(session){
+    deptName=session.deptName||'Neurologisk Afd. N';
+    deptAfd=session.deptAfd||'N';
+    // Gendan bruger-info
+    if(session.isUser&&session.uid){
+      _fbUid=session.uid;
+      if(session.token)_fbToken=session.token;
+      activeBruger={uid:session.uid,n:session.user||'Bruger',e:(session.user||'').toLowerCase()+'@ouh.dk',rolle:'plejepersonale',i:(session.user||'??').slice(0,2)};
+    }
+    load(); showApp(); renderAll(); updateBadges();
+    // Sæt korrekt vagt-filter baseret på tidspunkt
+    const h=new Date().getHours();
+    const f=h>=7&&h<15?'dag':h>=15&&h<23?'aften':'nat';
+    activeVagtFilter=f; setVagtFilter(f);
+    if(session.isUser&&!session.isOffline&&!session.isDemo) startPoll();
+  } else document.getElementById('loginScreen').style.display='flex';
+
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+});
+</script>
+</body>
+</html>
