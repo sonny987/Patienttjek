@@ -1,0 +1,361 @@
+/* ═══════════════════════════════════════════════════════════════
+   patienttjek-v2-theme.css — Patienttjek v2
+   Tilføjer:
+     1. Lyst tema som standard (--light-* variabler)
+     2. Mørkt tema bevaret via body.dark-mode (dit eksisterende system)
+     3. Nyheder-komponenter (ny-*)
+     4. Vagtopgaver-komponenter (vt-*)
+   Tilføj til index.html: <link rel="stylesheet" href="patienttjek-v2-theme.css">
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 1. LYS TEMA (standard) ─────────────────────────────────────
+   Overskriver kun de nødvendige variabler fra style.css.
+   Dit eksisterende light-mode class er allerede delvis defineret —
+   vi udbygger den med de nye farver fra demo-versionen.
+   ─────────────────────────────────────────────────────────────── */
+
+/* Gør lyst tema til standard uden class-prefix */
+:root {
+  /* Baggrunde */
+  --bg:      #f5f4f0;
+  --s1:      #ffffff;
+  --s2:      #f0efe9;
+  --s3:      #e8e6de;
+
+  /* Borders */
+  --border:  #e2e0d8;
+  --border2: #cccab8;
+
+  /* Tekst */
+  --text:    #1a1a18;
+  --muted:   #6b6a62;
+  --muted2:  #9a9890;
+
+  /* Semantiske farver — lys version */
+  --green:   #3B6D11;
+  --gbg:     #EAF3DE;
+  --gbrd:    #639922;
+
+  --yellow:  #854F0B;
+  --ybg:     #FAEEDA;
+  --ybrd:    #BA7517;
+
+  --red:     #A32D2D;
+  --rbg:     #FCEBEB;
+  --rbrd:    #E24B4A;
+
+  --blue:    #0C447C;
+  --bbg:     #E6F1FB;
+  --bbrd:    #378ADD;
+
+  --purple:  #3C3489;
+  --pbg:     #EEEDFE;
+  --pbrd:    #7F77DD;
+
+  --orange:  #854F0B;
+  --obg:     #FAEEDA;
+  --obrd:    #BA7517;
+
+  --teal:    #085041;
+  --tbg:     #E1F5EE;
+  --tbrd:    #1D9E75;
+}
+
+/* Lyst tema: lette skygger på kort og header */
+body:not(.dark-mode) header { box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+body:not(.dark-mode) .pt-card { box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+body:not(.dark-mode) .sec { box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+
+/* ── 2. MØRKT TEMA (body.dark-mode) ─────────────────────────────
+   Genaktiverer dit eksisterende mørke farvesæt.
+   ─────────────────────────────────────────────────────────────── */
+body.dark-mode {
+  --bg:      #0a0d14;
+  --s1:      #111520;
+  --s2:      #161b2e;
+  --s3:      #1c2238;
+  --border:  #252d48;
+  --border2: #2e3854;
+  --text:    #dce3f5;
+  --muted:   #6b7599;
+  --muted2:  #8892b0;
+
+  --green:   #10b981;
+  --gbg:     rgba(16,185,129,.13);
+  --gbrd:    rgba(16,185,129,.25);
+
+  --yellow:  #f59e0b;
+  --ybg:     rgba(245,158,11,.13);
+  --ybrd:    rgba(245,158,11,.25);
+
+  --red:     #ef4444;
+  --rbg:     rgba(239,68,68,.13);
+  --rbrd:    rgba(239,68,68,.25);
+
+  --blue:    #3b82f6;
+  --bbg:     rgba(59,130,246,.13);
+  --bbrd:    rgba(59,130,246,.25);
+
+  --purple:  #a855f7;
+  --pbg:     rgba(168,85,247,.13);
+  --pbrd:    rgba(168,85,247,.25);
+
+  --orange:  #f97316;
+  --obg:     rgba(249,115,22,.13);
+  --obrd:    rgba(249,115,22,.25);
+
+  --teal:    #06b6d4;
+  --tbg:     rgba(6,182,212,.13);
+  --tbrd:    rgba(6,182,212,.25);
+}
+body.dark-mode header { box-shadow: none; }
+body.dark-mode .pt-card { box-shadow: none; }
+
+/* ── TEMA-TOGGLE KNAP ────────────────────────────────────────────
+   Opdateret toggleTheme() funktion — skifter nu mellem dark-mode
+   og standard (lyst). Tilsidesætter den eksisterende toggleTheme.
+   ─────────────────────────────────────────────────────────────── */
+
+
+/* ── 3. NYHEDER-KOMPONENTER ─────────────────────────────────────── */
+
+.ny-searchbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+.ny-searchbar input::placeholder { color: var(--muted2); }
+
+.ny-afd-chip { margin-bottom: 14px; }
+
+.ny-year-lbl {
+  padding: 6px 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--muted2);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+  margin-top: 16px;
+}
+.ny-year-lbl:first-child { margin-top: 0; }
+
+.ny-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 6px;
+  overflow: hidden;
+  background: var(--s1);
+  transition: border-color .15s;
+}
+.ny-card.ulaest { border-left: 3px solid var(--blue); }
+.ny-card:hover  { border-color: var(--border2); }
+
+.ny-card-hdr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  user-select: none;
+}
+.ny-card.open .ny-chev { transform: rotate(180deg); }
+
+.ny-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue);
+  flex-shrink: 0;
+  transition: opacity .2s;
+}
+
+.ny-card-meta   { flex: 1; min-width: 0; }
+.ny-card-title  { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ny-card-sub    { font-size: 11px; color: var(--muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+.ny-card-date   { font-size: 11px; color: var(--muted2); flex-shrink: 0; }
+.ny-chev {
+  width: 16px; height: 16px;
+  color: var(--muted2);
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+
+.ny-status-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 20px;
+}
+.ny-status-pill.ulaest { background: var(--bbg); color: var(--blue); border: 1px solid var(--bbrd); }
+.ny-status-pill.laest  { background: var(--s2);  color: var(--muted2); border: 1px solid var(--border); }
+
+.ny-card-body { display: none; border-top: 1px solid var(--border); padding: 12px 14px; }
+.ny-card.open .ny-card-body { display: block; }
+
+.ny-slide       { margin-bottom: 12px; }
+.ny-slide:last-child { margin-bottom: 0; }
+.ny-slide-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.ny-slide-text  { font-size: 13px; color: var(--muted2); line-height: 1.6; }
+
+.ny-upload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0;
+  padding: 11px;
+  border-radius: 10px;
+  border: 1px dashed var(--border2);
+  color: var(--muted2);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .12s;
+  background: var(--s1);
+}
+.ny-upload-btn:hover { border-color: var(--green); color: var(--green); background: var(--gbg); }
+
+.ny-admin-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--s1);
+}
+
+.ny-bruger-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 5px;
+  cursor: pointer;
+  transition: background .1s;
+  background: var(--s1);
+}
+.ny-bruger-row:hover { background: var(--s2); }
+.ny-bruger-row.aktiv { border-color: var(--green); background: var(--gbg); }
+
+.ny-bruger-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--s2);
+  color: var(--muted2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  flex-shrink: 0;
+}
+.ny-bruger-avatar.aktiv { background: var(--green); color: #fff; }
+
+/* ── 4. VAGTOPGAVER-KOMPONENTER ────────────────────────────────── */
+
+.vt-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.vt-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.vt-progress-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+.vt-progress-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 3px;
+  transition: width .3s;
+}
+.vt-progress-pct {
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 36px;
+  text-align: right;
+  color: var(--muted2);
+}
+
+.vt-sec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 10px 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted2);
+}
+.vt-sec-header:first-child { margin-top: 0; }
+
+.vt-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .1s;
+  background: var(--s1);
+  border-radius: 8px;
+  margin-bottom: 3px;
+  border: 1px solid var(--border);
+}
+.vt-item:hover         { background: var(--s2); }
+.vt-item.done          { opacity: .65; }
+.vt-item.done .vt-item-txt { text-decoration: line-through; color: var(--muted2); }
+
+.vt-check {
+  width: 20px; height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  margin-top: 1px;
+  transition: all .15s;
+  color: transparent;
+}
+.vt-check.done {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.vt-item-body   { flex: 1; min-width: 0; }
+.vt-item-txt    { font-size: 13px; color: var(--text); line-height: 1.4; }
+.vt-item-sub    { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.vt-item-time   { font-size: 11px; color: var(--muted2); flex-shrink: 0; margin-top: 2px; }
+
+.vt-add-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 14px;
+  align-items: center;
+}
+
+/* ── 5. TEMA-TOGGLE (opdateret JS injiceres inline) ─────────────── */
+/* toggleTheme() erstattes med nedenstående version via script-tag */
+
