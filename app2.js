@@ -58,14 +58,26 @@ function renderSSSSection(p){
               <button class="sp-opt sp-done" style="font-size:11px;width:100%" onclick="setSSSObsStatus('${p.id}','${t}','done')">✓ Udført</button>
               <button class="sp-opt sp-over" style="font-size:11px;width:100%" onclick="setSSSObsStatus('${p.id}','${t}','notdone')">✗ Ikke udført</button>
               <button class="sp-opt sp-pend" style="font-size:11px;width:100%" onclick="setSSSObsStatus('${p.id}','${t}','pending')">— Nulstil</button>
-              <div class="nudge-label" style="margin-top:4px">Ryk tid</div>
-              <div class="nudge-btns">
+              <div class="nudge-label" style="margin-top:6px">✎ Skift tidspunkt</div>
+              <div style="display:flex;gap:5px;margin-bottom:5px;align-items:center">
+                <input type="time" id="sss-tinp-${pickerId}" value="${t}"
+                  style="flex:1;padding:5px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--s3);color:var(--text);font-size:13px;font-family:inherit"
+                  onkeydown="if(event.key==='Enter')sssApplyTime('${p.id}',${i},'${pickerId}',false)">
+                <button class="nudge-btn nudge-fwd" style="padding:5px 8px;font-size:11px" onclick="sssApplyTime('${p.id}',${i},'${pickerId}',false)">Kun denne</button>
+              </div>
+              <button class="nudge-btn" style="width:100%;margin-bottom:5px;background:var(--bbg);color:var(--blue);border:1px solid var(--bbrd);font-size:11px" onclick="sssApplyTime('${p.id}',${i},'${pickerId}',true)">↔ Ryk alle tider med samme forskydning</button>
+              <div class="nudge-label" style="margin-top:2px">Hurtigjustering</div>
+              <div class="nudge-btns" style="flex-wrap:wrap;gap:4px">
+                <button class="nudge-btn nudge-back" onclick="nudgeSSSTime('${p.id}',${i},-120)">−2t</button>
                 <button class="nudge-btn nudge-back" onclick="nudgeSSSTime('${p.id}',${i},-60)">−1t</button>
                 <button class="nudge-btn nudge-back" onclick="nudgeSSSTime('${p.id}',${i},-30)">−30</button>
+                <button class="nudge-btn nudge-back" onclick="nudgeSSSTime('${p.id}',${i},-15)">−15</button>
+                <button class="nudge-btn nudge-fwd"  onclick="nudgeSSSTime('${p.id}',${i},15)">+15</button>
                 <button class="nudge-btn nudge-fwd"  onclick="nudgeSSSTime('${p.id}',${i},30)">+30</button>
                 <button class="nudge-btn nudge-fwd"  onclick="nudgeSSSTime('${p.id}',${i},60)">+1t</button>
+                <button class="nudge-btn nudge-fwd"  onclick="nudgeSSSTime('${p.id}',${i},120)">+2t</button>
               </div>
-              <button class="nudge-del" onclick="removeSSSTime('${p.id}',${i})">🗑 Fjern</button>
+              <button class="nudge-del" style="margin-top:5px" onclick="removeSSSTime('${p.id}',${i})">🗑 Fjern</button>
               <button class="add-prio-btn" style="margin-top:4px;width:100%;justify-content:center" onclick="openAddPrioMenu(event,'${p.id}','SSS måling kl. ${t}')">⚡ Prioritér</button>
             </div>
           </div>`;
@@ -761,8 +773,17 @@ function renderTimeSlotWithNudge(pid, secKey, tid, ts, idx){
       <button class="sp-opt sp-done" style="font-size:11px;width:100%" onclick="setSlotStatus('${pid}','${secKey}','${tid}',${idx},'done')">✓ Udført</button>
       <button class="sp-opt sp-over" style="font-size:11px;width:100%" onclick="setSlotStatus('${pid}','${secKey}','${tid}',${idx},'notdone')">✗ Ikke udført</button>
       <button class="sp-opt sp-pend" style="font-size:11px;width:100%" onclick="setSlotStatus('${pid}','${secKey}','${tid}',${idx},'pending')">— Nulstil</button>
-      <div class="nudge-label" style="margin-top:4px">Ryk tidspunkt</div>
+      <div class="nudge-label" style="margin-top:6px">✎ Skift tidspunkt</div>
+      <div style="display:flex;gap:5px;margin-bottom:5px;align-items:center">
+        <input type="time" id="ich-tinp-${pickerId}" value="${timeStr}"
+          style="flex:1;padding:5px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--s3);color:var(--text);font-size:13px;font-family:inherit"
+          onkeydown="if(event.key==='Enter')ichApplyTime('${pid}','${secKey}','${tid}',${idx},'${pickerId}',false)">
+        <button class="nudge-btn nudge-fwd" style="padding:5px 8px;font-size:11px" onclick="ichApplyTime('${pid}','${secKey}','${tid}',${idx},'${pickerId}',false)">Kun denne</button>
+      </div>
+      <button class="nudge-btn" style="width:100%;margin-bottom:5px;background:var(--bbg);color:var(--blue);border:1px solid var(--bbrd);font-size:11px" onclick="ichApplyTime('${pid}','${secKey}','${tid}',${idx},'${pickerId}',true)">↔ Ryk alle tider med samme forskydning</button>
+      <div class="nudge-label" style="margin-top:2px">Hurtigjustering</div>
       <div class="nudge-btns">
+        <button class="nudge-btn nudge-back" onclick="nudgeTime('${pid}','${secKey}','${tid}',${idx},-120)">−2t</button>
         <button class="nudge-btn nudge-back" onclick="nudgeTime('${pid}','${secKey}','${tid}',${idx},-60)">−1t</button>
         <button class="nudge-btn nudge-back" onclick="nudgeTime('${pid}','${secKey}','${tid}',${idx},-30)">−30</button>
         <button class="nudge-btn nudge-back" onclick="nudgeTime('${pid}','${secKey}','${tid}',${idx},-15)">−15</button>
@@ -770,6 +791,7 @@ function renderTimeSlotWithNudge(pid, secKey, tid, ts, idx){
         <button class="nudge-btn nudge-fwd"  onclick="nudgeTime('${pid}','${secKey}','${tid}',${idx},15)">+15</button>
         <button class="nudge-btn nudge-fwd"  onclick="nudgeTime('${pid}','${secKey}','${tid}',${idx},30)">+30</button>
         <button class="nudge-btn nudge-fwd"  onclick="nudgeTime('${pid}','${secKey}','${tid}',${idx},60)">+1t</button>
+        <button class="nudge-btn nudge-fwd"  onclick="nudgeTime('${pid}','${secKey}','${tid}',${idx},120)">+2t</button>
       </div>
       <button class="nudge-del" onclick="removeTimeSlot('${pid}','${secKey}','${tid}',${idx})">🗑 Fjern tidspunkt</button>
     </div>
@@ -1203,8 +1225,17 @@ function renderSondeTimeSlot(pid, ts, idx){
       <span style="font-size:9px;color:var(--muted);margin-left:2px">↕</span>
     </div>
     <div id="${nudgeId}" class="nudge-popup" style="display:none">
-      <div class="nudge-label">Ryk tidspunkt</div>
+      <div class="nudge-label">✎ Skift tidspunkt</div>
+      <div style="display:flex;gap:5px;margin-bottom:5px;align-items:center">
+        <input type="time" id="sonde-tinp-${nudgeId}" value="${ts}"
+          style="flex:1;padding:5px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--s3);color:var(--text);font-size:13px;font-family:inherit"
+          onkeydown="if(event.key==='Enter')sondeApplyTime('${pid}',${idx},'${nudgeId}',false)">
+        <button class="nudge-btn nudge-fwd" style="padding:5px 8px;font-size:11px" onclick="sondeApplyTime('${pid}',${idx},'${nudgeId}',false)">Kun denne</button>
+      </div>
+      <button class="nudge-btn" style="width:100%;margin-bottom:5px;background:var(--bbg);color:var(--blue);border:1px solid var(--bbrd);font-size:11px" onclick="sondeApplyTime('${pid}',${idx},'${nudgeId}',true)">↔ Ryk alle tider med samme forskydning</button>
+      <div class="nudge-label" style="margin-top:2px">Hurtigjustering</div>
       <div class="nudge-btns">
+        <button class="nudge-btn nudge-back" onclick="nudgeSondeTime('${pid}',${idx},-120)">−2t</button>
         <button class="nudge-btn nudge-back" onclick="nudgeSondeTime('${pid}',${idx},-60)">−1t</button>
         <button class="nudge-btn nudge-back" onclick="nudgeSondeTime('${pid}',${idx},-30)">−30</button>
         <button class="nudge-btn nudge-back" onclick="nudgeSondeTime('${pid}',${idx},-15)">−15</button>
@@ -1212,6 +1243,7 @@ function renderSondeTimeSlot(pid, ts, idx){
         <button class="nudge-btn nudge-fwd" onclick="nudgeSondeTime('${pid}',${idx},15)">+15</button>
         <button class="nudge-btn nudge-fwd" onclick="nudgeSondeTime('${pid}',${idx},30)">+30</button>
         <button class="nudge-btn nudge-fwd" onclick="nudgeSondeTime('${pid}',${idx},60)">+1t</button>
+        <button class="nudge-btn nudge-fwd" onclick="nudgeSondeTime('${pid}',${idx},120)">+2t</button>
       </div>
       <button class="nudge-del" onclick="removeSondeTime('${pid}',${idx})">🗑 Fjern tidspunkt</button>
     </div>
@@ -1528,13 +1560,122 @@ function setSSSObsStatus(pid,time,status){
   document.querySelectorAll('.nudge-popup').forEach(p=>p.style.display='none');
   save();render();
 }
+// ── sssApplyTime — skift præcis tid, enkelt eller alle ──
+function sssApplyTime(pid, idx, pickerId, rykAlle) {
+  const inp = document.getElementById('sss-tinp-' + pickerId);
+  if (!inp || !inp.value) return;
+  const nyTid = inp.value; // HH:MM format fra <input type="time">
+  const p = patients.find(x => x.id === pid);
+  if (!p || !p.sections.sss || !p.sections.sss.times) return;
+
+  const toMin = s => { const [h,m] = s.split(':').map(Number); return h*60+m; };
+  const toHHMM = m => String(Math.floor((m+1440)%1440/60)).padStart(2,'0') + ':' + String((m+1440)%60).padStart(2,'0');
+
+  if (rykAlle) {
+    // Beregn forskydning fra den valgte tid og ryk alle tider med samme delta
+    const gammelMin = toMin(p.sections.sss.times[idx]);
+    const nyMin = toMin(nyTid);
+    const delta = nyMin - gammelMin;
+    p.sections.sss.times = p.sections.sss.times.map(t => toHHMM(toMin(t) + delta));
+  } else {
+    // Kun denne ene tid
+    p.sections.sss.times[idx] = nyTid;
+  }
+
+  p.sections.sss.times.sort();
+  document.querySelectorAll('.nudge-popup').forEach(x => x.style.display = 'none');
+  save(); render();
+}
+
+// ── ichApplyTime — for ICH/generelle tidsslots ──
+function ichApplyTime(pid, secKey, oldTid, idx, pickerId, rykAlle) {
+  const inp = document.getElementById('ich-tinp-' + pickerId);
+  if (!inp || !inp.value) return;
+  const nyTid = inp.value;
+  const p = patients.find(x => x.id === pid);
+  if (!p) return;
+  const sec = p.sections[secKey];
+  if (!sec || !sec.times) return;
+
+  const toMin = s => { const [h,m] = s.split(':').map(Number); return h*60+m; };
+  const toHHMM = m => String(Math.floor(((m%1440)+1440)%1440/60)).padStart(2,'0') + ':' + String(((m%1440)+1440)%60).padStart(2,'0');
+
+  if (rykAlle) {
+    const delta = toMin(nyTid) - toMin(oldTid);
+    sec.times = sec.times.map(t => toHHMM(toMin(t) + delta));
+  } else {
+    sec.times[idx] = nyTid;
+  }
+  sec.times.sort();
+  document.querySelectorAll('.nudge-popup').forEach(x => x.style.display = 'none');
+  save(); render();
+}
+
+// ── sondeApplyTime — for sonde-tidsslots ──
+function sondeApplyTime(pid, idx, nudgeId, rykAlle) {
+  const inp = document.getElementById('sonde-tinp-' + nudgeId);
+  if (!inp || !inp.value) return;
+  const nyTid = inp.value;
+  const p = patients.find(x => x.id === pid);
+  if (!p || !p.sections.sonde || !p.sections.sonde.times) return;
+
+  const toMin = s => { const [h,m] = s.split(':').map(Number); return h*60+m; };
+  const toHHMM = m => String(Math.floor(((m%1440)+1440)%1440/60)).padStart(2,'0') + ':' + String(((m%1440)+1440)%60).padStart(2,'0');
+
+  if (rykAlle) {
+    const gammelTid = p.sections.sonde.times[idx];
+    const delta = toMin(nyTid) - toMin(gammelTid);
+    p.sections.sonde.times = p.sections.sonde.times.map(t => toHHMM(toMin(t) + delta));
+  } else {
+    p.sections.sonde.times[idx] = nyTid;
+  }
+  p.sections.sonde.times.sort();
+  document.querySelectorAll('.nudge-popup').forEach(x => x.style.display = 'none');
+  save(); render();
+}
+
 function nudgeSSSTime(pid,idx,deltaMin){
   const p=patients.find(x=>x.id===pid);
   const [h,m]=p.sections.sss.times[idx].split(':').map(Number);
   const total=(h*60+m+deltaMin+1440)%1440;
   p.sections.sss.times[idx]=String(Math.floor(total/60)).padStart(2,'0')+':'+String(total%60).padStart(2,'0');
+  p.sections.sss.times.sort();
   document.querySelectorAll('.nudge-popup').forEach(p=>p.style.display='none');
   save();render();
+}
+function nudgeSSSTimeCustom(pid,idx){
+  const p=patients.find(x=>x.id===pid);
+  const cur=p.sections.sss.times[idx]||'';
+  openTimePicker(function(t){
+    if(!t) return;
+    p.sections.sss.times[idx]=t;
+    p.sections.sss.times.sort();
+    document.querySelectorAll('.nudge-popup').forEach(x=>x.style.display='none');
+    save();render();
+  }, cur);
+}
+function nudgeTimeCustom(pid,secKey,tid,idx){
+  openTimePicker(function(t){
+    if(!t) return;
+    const p=patients.find(x=>x.id===pid);
+    const sec=p.sections[secKey];
+    if(!sec||!sec.times) return;
+    sec.times[idx]=t;
+    sec.times.sort();
+    document.querySelectorAll('.nudge-popup').forEach(x=>x.style.display='none');
+    save();render();
+  }, tid);
+}
+function nudgeSondeTimeCustom(pid,idx){
+  const p=patients.find(x=>x.id===pid);
+  const cur=(p.sections.sonde&&p.sections.sonde.times&&p.sections.sonde.times[idx])||'';
+  openTimePicker(function(t){
+    if(!t) return;
+    p.sections.sonde.times[idx]=t;
+    p.sections.sonde.times.sort();
+    document.querySelectorAll('.nudge-popup').forEach(x=>x.style.display='none');
+    save();render();
+  }, cur);
 }
 function removeSSSTime(pid,idx){
   const p=patients.find(x=>x.id===pid);
@@ -2603,11 +2744,12 @@ function closeNexusIfOut(e){ if(e.target===document.getElementById('nexusOv'))cl
 
 let _timePickerCallback = null;
 
-function openTimePicker(callback){
+function openTimePicker(callback, defaultValue){
   _timePickerCallback = callback;
   const popup = document.getElementById('timePickerPopup');
   const inp = document.getElementById('timePickerInput');
-  inp.value = nowHHMM();
+  // Brug forudfyldt tid hvis givet (fx ved redigering), ellers aktuel tid
+  inp.value = (defaultValue && /^\d{2}:\d{2}$/.test(defaultValue)) ? defaultValue : nowHHMM();
   popup.classList.add('open');
   setTimeout(()=>inp.focus(), 50);
 }
