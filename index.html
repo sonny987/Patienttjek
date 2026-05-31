@@ -231,6 +231,7 @@
   <div class="view-tab" id="vtabSandbox" onclick="switchView('sandbox')" style="color:var(--yellow)">🎓 Uddannelse</div>
   <div class="view-tab" id="vtabVagtopgaver" onclick="goToNav('vagtopgaver')">✅ Vagtopgaver <span class="vtab-count" id="vtNavBadge" style="display:none">0</span></div>
   <div class="view-tab" id="vtabNyheder" onclick="goToNav('nyheder')">📰 Nyheder <span class="vtab-count" id="nyBadge" style="display:none">0</span></div>
+  <div class="view-tab" id="vtabStatistik" onclick="goToNav('statistik')">📊 Statistik</div>
   <div class="view-tab" onclick="toggleVagtnotepad()">📋 Notepad</div>
 </div>
 
@@ -403,6 +404,67 @@
       <span id="nyAfdChip" style="font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--gbg);color:var(--green);border:.5px solid var(--gm);display:inline-block;margin-bottom:11px">Kun egne nyheder</span>
       <div id="nyListEl"></div>
     </div>
+
+  <!-- ══════════════════════════════════════════
+       STATISTIK DASHBOARD
+  ══════════════════════════════════════════ -->
+  <div id="statistikView" style="display:none;max-width:720px;margin:0 auto;padding:14px">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div style="font-size:18px;font-weight:700">📊 Arbejdsproces</div>
+        <div style="font-size:12px;color:var(--muted2)" id="statDatoLbl"></div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="statSetPeriode(7)" id="statP7" style="font-size:11px">7 dage</button>
+        <button class="btn btn-ghost btn-sm" onclick="statSetPeriode(30)" id="statP30" style="font-size:11px">30 dage</button>
+        <button class="btn btn-ghost btn-sm" onclick="statSetPeriode(90)" id="statP90" style="font-size:11px">90 dage</button>
+      </div>
+    </div>
+
+    <!-- KPI række -->
+    <div id="statKpiRow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px"></div>
+
+    <!-- Graf 1: Vagtsammenligning -->
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">🌅 Vagtsammenligning</div>
+      <div style="font-size:11px;color:var(--muted2);margin-bottom:12px">Gennemførelsesprocent per vagttype</div>
+      <div id="statVagtChart" style="height:160px;position:relative"></div>
+    </div>
+
+    <!-- Graf 2: Udskudte prioriteringer -->
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">⚡ Gentagne prioriteringer</div>
+      <div style="font-size:11px;color:var(--muted2);margin-bottom:12px">Opgaver der oftest går igen som P1/P2</div>
+      <div id="statPrioChart"></div>
+    </div>
+
+    <!-- Graf 3: Travle tidspunkter -->
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">⏰ Travle tidspunkter</div>
+      <div style="font-size:11px;color:var(--muted2);margin-bottom:12px">Hvornår på dagen flest opgaver udføres</div>
+      <div id="statHeatmap" style="overflow-x:auto"></div>
+    </div>
+
+    <!-- Graf 4: Oversete opgaver -->
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">👁 Oversete opgaver</div>
+      <div style="font-size:11px;color:var(--muted2);margin-bottom:12px">Opgaver der oftest springes over eller ikke nås</div>
+      <div id="statMissedChart"></div>
+    </div>
+
+    <!-- Patientkort mini-widget -->
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">🏥 Per patient</div>
+      <div style="font-size:11px;color:var(--muted2);margin-bottom:12px">Opgavebelastning og åbne prioriteringer per patient</div>
+      <div id="statPatientChart"></div>
+    </div>
+
+    <div style="text-align:center;padding:16px 0">
+      <button class="btn btn-ghost btn-sm" onclick="statNulstil()" style="font-size:11px;color:var(--red)">🗑 Nulstil al statistik</button>
+    </div>
+  </div>
 
   </div><!-- end main-content -->
 </div><!-- end app-layout -->
@@ -862,6 +924,252 @@ async function ulAdminSletAfdeling(kode) {
   } catch { alert('Netværksfejl'); }
 }
 
+// ══════════════════════════════════════════════════════
+//  STATISTIK ENGINE
+// ══════════════════════════════════════════════════════
+
+let _statPeriode = 30;
+
+function statLog(type, data) {
+  try {
+    const logs = JSON.parse(localStorage.getItem('pt_stat_log') || '[]');
+    logs.push({ type, ...data });
+    if (logs.length > 5000) logs.splice(0, logs.length - 5000);
+    localStorage.setItem('pt_stat_log', JSON.stringify(logs));
+  } catch(e) {}
+}
+
+function statGetLogs(periode) {
+  try {
+    const logs = JSON.parse(localStorage.getItem('pt_stat_log') || '[]');
+    const cutoff = Date.now() - (periode * 24 * 60 * 60 * 1000);
+    return logs.filter(l => l.ts >= cutoff);
+  } catch(e) { return []; }
+}
+
+function statSetPeriode(p) {
+  _statPeriode = p;
+  ['7','30','90'].forEach(n => {
+    const btn = document.getElementById('statP' + n);
+    if (!btn) return;
+    const active = String(p) === n;
+    btn.style.background = active ? 'var(--bbg)' : '';
+    btn.style.borderColor = active ? 'var(--blue)' : '';
+    btn.style.color = active ? 'var(--blue)' : '';
+  });
+  statRender();
+}
+
+function statNulstil() {
+  if (!confirm('Slet al statistikdata? Dette kan ikke fortrydes.')) return;
+  localStorage.removeItem('pt_stat_log');
+  statRender();
+}
+
+function statRender() {
+  const lbl = document.getElementById('statDatoLbl');
+  if (lbl) lbl.textContent = 'Seneste ' + _statPeriode + ' dage';
+  const logs = statGetLogs(_statPeriode);
+  statRenderKPI(logs);
+  statRenderVagtChart(logs);
+  statRenderPrioChart(logs);
+  statRenderHeatmap(logs);
+  statRenderMissed(logs);
+  statRenderPatient(logs);
+}
+
+function statRenderKPI(logs) {
+  const el = document.getElementById('statKpiRow');
+  if (!el) return;
+  const done = logs.filter(l => l.type === 'done').length;
+  const missed = logs.filter(l => l.type === 'missed').length;
+  const total = done + missed;
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
+  el.innerHTML = [
+    { lbl:'Gennemført', val:done, color:'var(--green)', bg:'var(--gbg)', border:'var(--gbrd)', icon:'✅' },
+    { lbl:'Overset', val:missed, color:'var(--red)', bg:'var(--rbg)', border:'var(--rbrd)', icon:'👁' },
+    { lbl:'Fuldførelse', val:pct+'%', color:pct>=80?'var(--green)':pct>=60?'var(--yellow)':'var(--red)', bg:'var(--s2)', border:'var(--border)', icon:'📊' },
+    { lbl:'Logget i alt', val:total, color:'var(--blue)', bg:'var(--bbg)', border:'var(--bbrd)', icon:'📋' },
+  ].map(k => `<div style="background:${k.bg};border:1px solid ${k.border};border-radius:10px;padding:10px 12px;text-align:center">
+    <div style="font-size:18px;margin-bottom:2px">${k.icon}</div>
+    <div style="font-size:20px;font-weight:800;color:${k.color}">${k.val}</div>
+    <div style="font-size:10px;color:var(--muted2);font-weight:600">${k.lbl}</div>
+  </div>`).join('');
+}
+
+function statRenderVagtChart(logs) {
+  const el = document.getElementById('statVagtChart');
+  if (!el) return;
+  const vagter = [
+    { key:'dag', lbl:'☀️ Dag', color:'#f59e0b' },
+    { key:'aften', lbl:'🌆 Aften', color:'#3b82f6' },
+    { key:'nat', lbl:'🌙 Nat', color:'#a855f7' },
+    { key:'alle', lbl:'🔄 Fælles', color:'#10b981' },
+  ];
+  const data = vagter.map(v => {
+    const d = logs.filter(l => l.type==='done' && (l.vagt===v.key||(!l.vagt&&v.key==='alle'))).length;
+    const m = logs.filter(l => l.type==='missed' && (l.vagt===v.key||(!l.vagt&&v.key==='alle'))).length;
+    const t = d + m;
+    return { ...v, done:d, missed:m, total:t, pct:t>0?Math.round(d/t*100):0 };
+  });
+  const maxVal = Math.max(...data.map(d => d.total), 1);
+  el.innerHTML = `<div style="display:flex;align-items:flex-end;gap:12px;height:130px;padding:0 8px">
+    ${data.map(d => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+      <div style="font-size:11px;font-weight:700;color:${d.color}">${d.pct}%</div>
+      <div style="width:100%;position:relative;border-radius:4px 4px 0 0;overflow:hidden;height:${Math.max(d.total/maxVal*100,4)}px;background:${d.color};opacity:0.85">
+        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(239,68,68,0.55);height:${d.total>0?Math.round(d.missed/d.total*100):0}%"></div>
+      </div>
+      <div style="font-size:10px;color:var(--muted2);text-align:center">${d.lbl}</div>
+      <div style="font-size:9px;color:var(--muted2)">${d.done}/${d.total}</div>
+    </div>`).join('')}
+  </div>
+  <div style="display:flex;gap:12px;margin-top:8px;justify-content:center">
+    <span style="font-size:10px;color:var(--muted2)">■ <span style="color:var(--green)">Udført</span></span>
+    <span style="font-size:10px;color:var(--muted2)">■ <span style="color:var(--red)">Overset</span></span>
+  </div>`;
+}
+
+function statRenderPrioChart(logs) {
+  const el = document.getElementById('statPrioChart');
+  if (!el) return;
+  const allPrios = [];
+  if (typeof patients !== 'undefined') {
+    patients.forEach(p => {
+      (p.sections?.prioritering?.items||[]).forEach(item => {
+        if (!item.done) allPrios.push({...item, ptName:p.name, ptRoom:p.room});
+      });
+    });
+  }
+  const missedCounts = {};
+  logs.filter(l => l.type==='missed').forEach(l => { missedCounts[l.txt] = (missedCounts[l.txt]||0)+1; });
+  const topMissed = Object.entries(missedCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  if (!allPrios.length && !topMissed.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted2);font-size:12px">Ingen data endnu — akkumuleres over tid</div>';
+    return;
+  }
+  let html = '';
+  if (allPrios.length) {
+    html += '<div style="font-size:11px;font-weight:700;color:var(--muted2);margin-bottom:6px">ÅBNE P1/P2 OPGAVER</div>';
+    allPrios.slice(0,8).forEach(item => {
+      const col = item.priority==='red'?'var(--red)':'var(--yellow)';
+      const bg = item.priority==='red'?'var(--rbg)':'var(--ybg)';
+      html += `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:${bg};border-radius:7px;margin-bottom:4px">
+        <span style="font-size:10px;font-weight:800;color:${col};min-width:22px">${item.priority==='red'?'P1':'P2'}</span>
+        <span style="flex:1;font-size:12px">${item.label}</span>
+        <span style="font-size:10px;color:var(--muted2)">${item.ptRoom?'Stue '+item.ptRoom:''} ${item.ptName||''}</span>
+      </div>`;
+    });
+  }
+  if (topMissed.length) {
+    html += '<div style="font-size:11px;font-weight:700;color:var(--muted2);margin:10px 0 6px">OFTEST OVERSET ('+_statPeriode+' DAGE)</div>';
+    const maxC = topMissed[0][1];
+    topMissed.forEach(([txt,count]) => {
+      const pct = Math.round(count/maxC*100);
+      html += `<div style="margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px">
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80%">${txt}</span>
+          <span style="color:var(--red);font-weight:700;flex-shrink:0">${count}×</span>
+        </div>
+        <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+          <div style="height:100%;background:var(--red);border-radius:3px;width:${pct}%"></div>
+        </div>
+      </div>`;
+    });
+  }
+  el.innerHTML = html;
+}
+
+function statRenderHeatmap(logs) {
+  const el = document.getElementById('statHeatmap');
+  if (!el) return;
+  const hourCounts = Array(24).fill(0);
+  logs.filter(l => l.type==='done' && l.ts).forEach(l => { hourCounts[new Date(l.ts).getHours()]++; });
+  const max = Math.max(...hourCounts, 1);
+  const getColor = c => {
+    if (!c) return 'var(--s2)';
+    const i = c/max;
+    if (i < 0.25) return '#1e3a5f';
+    if (i < 0.5) return '#1d4ed8';
+    if (i < 0.75) return '#3b82f6';
+    return '#60a5fa';
+  };
+  el.innerHTML = `<div style="display:flex;gap:3px;flex-wrap:wrap">
+    ${Array.from({length:24},(_,h) => `<div style="text-align:center;min-width:28px">
+      <div style="height:36px;background:${getColor(hourCounts[h])};border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${hourCounts[h]>0?'#fff':'var(--muted2)'}" title="Kl.${String(h).padStart(2,'0')} — ${hourCounts[h]} opgaver">
+        ${hourCounts[h]||''}
+      </div>
+      <div style="font-size:9px;color:var(--muted2);margin-top:2px">${String(h).padStart(2,'0')}</div>
+    </div>`).join('')}
+  </div>
+  <div style="display:flex;gap:6px;margin-top:8px;align-items:center;justify-content:flex-end">
+    <span style="font-size:10px;color:var(--muted2)">Roligt</span>
+    ${['#1e3a5f','#1d4ed8','#3b82f6','#60a5fa'].map(c=>`<div style="width:14px;height:10px;background:${c};border-radius:2px"></div>`).join('')}
+    <span style="font-size:10px;color:var(--muted2)">Travlt</span>
+  </div>`;
+}
+
+function statRenderMissed(logs) {
+  const el = document.getElementById('statMissedChart');
+  if (!el) return;
+  const missed = logs.filter(l => l.type==='missed');
+  if (!missed.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted2);font-size:12px">Ingen oversete opgaver endnu 🎉</div>';
+    return;
+  }
+  const bySec = {};
+  missed.forEach(l => {
+    const s = l.sec||'Ukendt';
+    if (!bySec[s]) bySec[s] = {total:0, items:{}};
+    bySec[s].total++;
+    bySec[s].items[l.txt] = (bySec[s].items[l.txt]||0)+1;
+  });
+  const maxSec = Math.max(...Object.values(bySec).map(s=>s.total), 1);
+  el.innerHTML = Object.entries(bySec).sort((a,b)=>b[1].total-a[1].total).map(([sec,data]) => {
+    const pct = Math.round(data.total/maxSec*100);
+    const top = Object.entries(data.items).sort((a,b)=>b[1]-a[1])[0];
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:3px">
+        <span>${sec}</span><span style="color:var(--red)">${data.total}×</span>
+      </div>
+      <div style="height:7px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:3px">
+        <div style="height:100%;background:var(--red);opacity:0.75;border-radius:4px;width:${pct}%"></div>
+      </div>
+      ${top?`<div style="font-size:10px;color:var(--muted2)">Hyppigst: "${top[0].substring(0,40)}${top[0].length>40?'...':''}" (${top[1]}×)</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function statRenderPatient(logs) {
+  const el = document.getElementById('statPatientChart');
+  if (!el) return;
+  if (typeof patients==='undefined'||!patients.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted2);font-size:12px">Ingen patienter endnu</div>';
+    return;
+  }
+  el.innerHTML = patients.map(p => {
+    const tasks = p.sections?.opgaver?.tasks||[];
+    const done = tasks.filter(t=>t.done).length;
+    const total = tasks.length;
+    const pct = total>0?Math.round(done/total*100):0;
+    const openPrio = (p.sections?.prioritering?.items||[]).filter(x=>!x.done).length;
+    const teamCls = p.team?'team-'+p.team:'';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div class="room-badge" style="font-size:11px;min-width:32px">${p.room||'?'}</div>
+      ${p.team?`<span class="team-label ${teamCls}" style="font-size:9px">${p.team}</span>`:''}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name||'—'}</div>
+        <div style="height:5px;background:var(--border);border-radius:3px;margin-top:3px;overflow:hidden">
+          <div style="height:100%;background:${pct>=80?'var(--green)':pct>=50?'var(--yellow)':'var(--red)'};border-radius:3px;width:${pct}%"></div>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:12px;font-weight:700;color:${pct>=80?'var(--green)':pct>=50?'var(--yellow)':'var(--red)'}">${pct}%</div>
+        ${openPrio?`<div style="font-size:10px;color:var(--red)">⚡${openPrio}P</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 // ── SHOW LOGIN ────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   // Skjul originalt dept-login overlay (fra app1.js) hvis det eksisterer
@@ -1239,7 +1547,8 @@ function goToNav(page) {
   const sbView = document.getElementById('sandboxView');
 
   // Skjul alt
-  [vtView, nyView, ptView, prView, sbView].forEach(v => { if (v) v.style.display = 'none'; });
+  const stView2 = document.getElementById('statistikView');
+  [vtView, nyView, ptView, prView, sbView, stView2].forEach(v => { if (v) v.style.display = 'none'; });
 
   if (page === 'patienter') {
     if (ptView) ptView.style.display = '';
@@ -1251,6 +1560,12 @@ function goToNav(page) {
   } else if (page === 'nyheder') {
     if (nyView) nyView.style.display = 'block';
     nyRender();
+  } else if (page === 'statistik') {
+    const stView = document.getElementById('statistikView');
+    if (stView) { stView.style.display = 'block'; statRender(); }
+    document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+    const stTab = document.getElementById('vtabStatistik');
+    if (stTab) stTab.classList.add('active');
   }
 }
 
@@ -1332,8 +1647,26 @@ function vtRender() {
   if (el) el.innerHTML = html;
 }
 
-function vtToggle(id) { const t = _vtTasks.find(t => t.id === id); if (!t) return; t.done = !t.done; vtSave(); vtRender(); }
-function vtNulstil() { if (!confirm('Nulstil synlige vagtopgaver?')) return; _vtTasks.filter(t => _vtFilter === 'alle' || !t.vagt || t.vagt === 'alle' || t.vagt === _vtFilter).forEach(t => t.done = false); vtSave(); vtRender(); }
+function vtToggle(id) {
+  const t = _vtTasks.find(t => t.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  if (t.done) {
+    // Log gennemførelse til statistik
+    statLog('done', { txt: t.txt, sec: t.sec, vagt: t.vagt, time: t.time, ts: Date.now() });
+  }
+  vtSave(); vtRender();
+}
+function vtNulstil() {
+  if (!confirm('Nulstil synlige vagtopgaver?')) return;
+  const visible = _vtTasks.filter(t => _vtFilter === 'alle' || !t.vagt || t.vagt === 'alle' || t.vagt === _vtFilter);
+  // Log oversete (ikke-udførte) opgaver inden nulstil
+  visible.filter(t => !t.done).forEach(t => {
+    statLog('missed', { txt: t.txt, sec: t.sec, vagt: t.vagt, time: t.time, ts: Date.now() });
+  });
+  visible.forEach(t => t.done = false);
+  vtSave(); vtRender();
+}
 
 // ── SORTER tider stigende ──
 function vtSortTime(a, b) {
