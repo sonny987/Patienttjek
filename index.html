@@ -145,6 +145,30 @@
       <button onclick="ulAdminSendReset()" style="width:100%;padding:8px;border:.5px solid var(--bm);background:var(--bbg);color:var(--blue);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">📧 Send nulstillings-email</button>
       <div id="au-reset-msg" style="display:none;font-size:11px;text-align:center;margin-top:7px"></div>
     </div>
+    <!-- Opret ny admin (kun superadmin) -->
+    <div id="new-admin-section" style="display:none;border:1px solid var(--red);border-radius:12px;padding:14px;margin-bottom:12px;background:var(--rbg)">
+      <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:4px">⚠️ Opret ny systemadministrator</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Kræver superadmin-bekræftelse. Alle handlinger logges.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div><div class="flabel">Brugernavn</div><input class="ifield" id="new-admin-user" placeholder="fx IT-ADMIN" style="width:100%;text-transform:uppercase"></div>
+        <div><div class="flabel">Fulde navn</div><input class="ifield" id="new-admin-navn" placeholder="fx Inge Andersen" style="width:100%"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div><div class="flabel">Admin-kode (min. 10 tegn)</div><input class="ifield" id="new-admin-pass" type="password" style="width:100%"></div>
+        <div><div class="flabel">Gentag kode</div><input class="ifield" id="new-admin-pass2" type="password" style="width:100%"></div>
+      </div>
+      <div id="new-admin-msg" style="display:none;font-size:11px;padding:5px 9px;border-radius:6px;margin-bottom:8px"></div>
+      <button onclick="ulOpretNyAdmin()" style="width:100%;padding:9px;background:var(--red);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Opret admin (kræver bekræftelse)</button>
+    </div>
+    <!-- Demo-afdeling -->
+    <div id="demo-section" style="border:.5px solid var(--blue);border-radius:12px;padding:14px;margin-bottom:12px;background:var(--bbg)">
+      <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:4px">🎯 Demo-afdeling — møde 25/08/2026</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Logincode: <b>DEMO-RIT-2026</b> — Husk at slette efter mødet</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button onclick="ulOpretDemoAfdeling()" style="padding:9px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✓ Opret demo-afdeling</button>
+        <button onclick="ulSletDemoAfdeling()" style="padding:9px;background:var(--rbg);color:var(--red);border:.5px solid var(--rbrd);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🗑 Slet demo + data</button>
+      </div>
+    </div>
     <!-- Aktivitetslog -->
     <div style="border:.5px solid var(--border);border-radius:12px;padding:14px">
       <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">📋 Aktivitetslog</div>
@@ -817,9 +841,14 @@ const UL_ADMIN_CODES = {
   'KP2-ADMIN-2025': 'Max Helgason (System Admin)',
   'OUH-SUPER-2025': 'IT Systemansvarlig OUH',
 };
+// Superadmin-koder (kun disse kan oprette nye admins og slette demo-data)
+const UL_SUPERADMIN_CODES = ['KP2-ADMIN-2025'];
+// Demo-afdeling til møde og præsentationer (kan nulstilles med ét klik)
+const DEMO_DEPT = { kode: 'DEMO', navn: 'Demo — Regional IT', sygehus: 'OUH', loginCode: 'DEMO-RIT-2026' };
+
 
 let _ulToken = null, _ulUid = null, _ulNavn = '', _ulAfd = 'N';
-let _ulIsAdmin = false, _ulAdminNavn = '';
+let _ulIsAdmin = false, _ulAdminNavn = '', _ulIsSuperAdmin = false;
 let _ulAdminLog = [];
 let _nyItems = [], _nyLaest = {}, _nyBrugerUid = 'anon';
 let _vtTasks = [], _vtFilter = 'dag', _vtNextId = 1;
@@ -832,6 +861,7 @@ const DEFAULT_AFDELINGER = [
   { kode: 'K', navn: 'Kardiologi K', sygehus: 'OUH', loginCode: 'KP2-KARDIO' },
   { kode: 'O', navn: 'Ortopædi O', sygehus: 'OUH', loginCode: 'KP2-ORTO' },
   { kode: 'P', navn: 'Psykiatri P', sygehus: 'OUH', loginCode: 'KP2-PSY' },
+  { kode: 'DEMO', navn: 'Demo — Regional IT', sygehus: 'OUH', loginCode: 'DEMO-RIT-2026', erDemo: true },
 ];
 let _afdelinger = [];
 
@@ -1406,7 +1436,8 @@ async function ulDoAdminLogin() {
   const localAdmin = UL_ADMIN_CODES[pass.toUpperCase()];
   if (localAdmin) {
     _ulIsAdmin = true; _ulAdminNavn = localAdmin;
-    localStorage.setItem('ul_admin', JSON.stringify({ navn: localAdmin, ts: Date.now() }));
+    _ulIsSuperAdmin = UL_SUPERADMIN_CODES.includes(pass.toUpperCase());
+    localStorage.setItem('ul_admin', JSON.stringify({ navn: localAdmin, isSuperAdmin: _ulIsSuperAdmin, ts: Date.now() }));
     ulShowAdminPanel(); return;
   }
   // Firebase admin-bruger
@@ -1423,8 +1454,9 @@ async function ulDoAdminLogin() {
       const profil = pr.ok ? await pr.json() : null;
       if (profil?.rolle === 'admin' || profil?.isAdmin) {
         _ulIsAdmin = true; _ulAdminNavn = profil.navn || user;
+        _ulIsSuperAdmin = profil.isSuperAdmin === true;
         _ulToken = data.idToken; _ulUid = data.localId;
-        localStorage.setItem('ul_admin', JSON.stringify({ uid: data.localId, token: data.idToken, navn: _ulAdminNavn, ts: Date.now() }));
+        localStorage.setItem('ul_admin', JSON.stringify({ uid: data.localId, token: data.idToken, navn: _ulAdminNavn, isSuperAdmin: _ulIsSuperAdmin, ts: Date.now() }));
         ulShowAdminPanel();
       } else { ulMsg('Ingen admin-rettigheder'); }
     } else { ulMsg('Forkert kode'); }
@@ -1438,9 +1470,12 @@ function ulShowAdminPanel() {
   document.getElementById('adminLoggedAs').textContent = 'Logget ind som: ' + _ulAdminNavn;
   const ab = document.getElementById('ulAdminBtn');
   if (ab) ab.style.display = '';
-  ulAdminLog('Login: ' + _ulAdminNavn);
+  ulAdminLog('Login: ' + _ulAdminNavn + (_ulIsSuperAdmin ? ' [SUPERADMIN]' : ''));
   // Vis admin-only elementer
   ulShowAdminElements();
+  // Vis superadmin-sektioner
+  const newAdminSection = document.getElementById('new-admin-section');
+  if (newAdminSection) newAdminSection.style.display = _ulIsSuperAdmin ? 'block' : 'none';
   // Hent afdelinger til dropdown og liste
   ulHentAfdelinger();
   ulAdminHentAfdelinger();
@@ -1455,6 +1490,70 @@ function ulAdminLogout() {
   if (!confirm('Log ud af admin?')) return;
   localStorage.removeItem('ul_admin');
   location.reload();
+}
+
+// ── OPRET NY ADMIN (kun superadmin) ──────────────────────────────────────────
+async function ulOpretNyAdmin() {
+  if (!_ulIsSuperAdmin) { alert('Kun superadmin kan oprette nye admins.'); return; }
+  const user = (document.getElementById('new-admin-user').value || '').trim().toUpperCase();
+  const navn = (document.getElementById('new-admin-navn').value || '').trim();
+  const pass = (document.getElementById('new-admin-pass').value || '').trim();
+  const confirm2 = (document.getElementById('new-admin-pass2').value || '').trim();
+  const msgEl = document.getElementById('new-admin-msg');
+  const show = (m, ok=false) => { msgEl.textContent = m; msgEl.style.display='block'; msgEl.style.color = ok ? 'var(--green)' : 'var(--red)'; };
+  if (!user || !navn || !pass) { show('Udfyld alle felter'); return; }
+  if (pass !== confirm2) { show('Koderne matcher ikke'); return; }
+  if (pass.length < 10) { show('Admin-kode skal være mindst 10 tegn'); return; }
+  // To-faktor bekræftelse — superadmin skal bekræfte med sin egen kode
+  const bekraeft = prompt('Bekræft handling med din superadmin-kode:');
+  if (!bekraeft || !UL_ADMIN_CODES[bekraeft.toUpperCase()]) { show('Forkert bekræftelseskode — handling annulleret'); return; }
+  if (!UL_SUPERADMIN_CODES.includes(bekraeft.toUpperCase())) { show('Kun superadmin kan bekræfte denne handling'); return; }
+  const email = user.toLowerCase() + '@ouh.patienttjek.dk';
+  try {
+    const res = await fetch(`${UL_FB_AUTH}:signUp?key=${UL_FB_KEY}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass, returnSecureToken: true })
+    });
+    const data = await res.json();
+    if (data.localId) {
+      const auth = _ulToken ? `?auth=${_ulToken}` : '';
+      await fetch(`${UL_FB_BASE}/brugere/${data.localId}.json${auth}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          navn, email, rolle: 'admin', isAdmin: true, isSuperAdmin: false,
+          oprettetAf: _ulAdminNavn, oprettetDen: new Date().toISOString()
+        })
+      });
+      show('✓ Admin ' + user + ' oprettet!', true);
+      ulAdminLog('⚠️ NY ADMIN oprettet: ' + user + ' (' + navn + ') af ' + _ulAdminNavn);
+      setTimeout(() => { msgEl.style.display='none'; ['new-admin-user','new-admin-navn','new-admin-pass','new-admin-pass2'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; }); }, 2500);
+    } else if (data.error?.message?.includes('EMAIL_EXISTS')) { show('Brugernavn allerede i brug'); }
+    else { show('Fejl: ' + (data.error?.message || 'Prøv igen')); }
+  } catch { show('Netværksfejl'); }
+}
+
+// ── DEMO-AFDELING: OPRET OG NULSTIL ─────────────────────────────────────────
+async function ulOpretDemoAfdeling() {
+  if (!_ulIsSuperAdmin && !_ulIsAdmin) { alert('Kræver admin-adgang'); return; }
+  const auth = _ulToken ? `?auth=${_ulToken}` : '';
+  await fetch(`${UL_FB_BASE}/system/afdelinger/${DEMO_DEPT.kode}.json${auth}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...DEMO_DEPT, active: true, oprettetDen: new Date().toISOString(), erDemo: true })
+  });
+  ulAdminLog('Demo-afdeling oprettet: ' + DEMO_DEPT.loginCode);
+  alert('✓ Demo-afdeling oprettet!\nLoginKode: ' + DEMO_DEPT.loginCode + '\n\nHusk at slette den igen efter mødet.');
+}
+
+async function ulSletDemoAfdeling() {
+  if (!_ulIsSuperAdmin) { alert('Kun superadmin kan slette demo-afdelingen'); return; }
+  if (!confirm('Slet demo-afdelingen og alle demo-data?')) return;
+  const auth = _ulToken ? `?auth=${_ulToken}` : '';
+  // Slet afdelingen
+  await fetch(`${UL_FB_BASE}/system/afdelinger/${DEMO_DEPT.kode}.json${auth}`, { method: 'DELETE' });
+  // Slet demo-patientdata
+  await fetch(`${UL_FB_BASE}/afdelinger/${DEMO_DEPT.kode}.json${auth}`, { method: 'DELETE' });
+  ulAdminLog('⚠️ Demo-afdeling og data SLETTET af ' + _ulAdminNavn);
+  alert('✓ Demo-afdeling og alle demo-data er slettet.');
 }
 
 function ulAdminLog(msg) {
