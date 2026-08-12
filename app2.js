@@ -2822,9 +2822,11 @@ document.addEventListener('click', e=>{
 
 let _prioPickerPid = null;
 let _prioPickerLabel = null;
+let _prioMenuOpenTime = 0;
 function openAddPrioMenu(e, pid, label){
   e.stopPropagation();
   e.preventDefault();
+  _prioMenuOpenTime = Date.now();
   addToPriorityList(pid, label, 'yellow');
   const btn = e.target.closest('.add-prio-btn');
   if(btn){
