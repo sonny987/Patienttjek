@@ -1617,19 +1617,25 @@ function sondeApplyTime(pid, idx, nudgeId, rykAlle) {
   if (!inp || !inp.value) return;
   const nyTid = inp.value;
   const p = patients.find(x => x.id === pid);
-  if (!p || !p.sections.sonde || !p.sections.sonde.times) return;
+  if (!p) return;
+
+  // Tiderne ligger i p.sections.kost.sondeTimes
+  const kost = p.sections.kost;
+  if (!kost) return;
+  const times = [...getSondeTimes(p)];
 
   const toMin = s => { const [h,m] = s.split(':').map(Number); return h*60+m; };
   const toHHMM = m => String(Math.floor(((m%1440)+1440)%1440/60)).padStart(2,'0') + ':' + String(((m%1440)+1440)%60).padStart(2,'0');
 
   if (rykAlle) {
-    const gammelTid = p.sections.sonde.times[idx];
+    const gammelTid = times[idx];
     const delta = toMin(nyTid) - toMin(gammelTid);
-    p.sections.sonde.times = p.sections.sonde.times.map(t => toHHMM(toMin(t) + delta));
+    p.sections.kost.sondeTimes = times.map(t => toHHMM(toMin(t) + delta));
   } else {
-    p.sections.sonde.times[idx] = nyTid;
+    times[idx] = nyTid;
+    p.sections.kost.sondeTimes = times;
   }
-  p.sections.sonde.times.sort();
+  p.sections.kost.sondeTimes.sort();
   document.querySelectorAll('.nudge-popup').forEach(x => x.style.display = 'none');
   save(); render();
 }
